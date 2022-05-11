@@ -172,6 +172,34 @@ public class AvroSchema implements ParsedSchema {
     }
   }
 
+  public boolean isAddOnlyCompatible(ParsedSchema previousSchema) {
+    log.info("is add only compatible");
+    if (!schemaType().equals(previousSchema.schemaType())) {
+      return false;
+    }
+    try {
+      if (this.schemaObj.getFields()
+              .size() < ((AvroSchema) previousSchema).schemaObj.getFields().size()) {
+        log.info("New schema fields size is less than previous schema");
+        return false;
+      }
+      int size = ((AvroSchema) previousSchema).schemaObj.getFields().size();
+      for (int i = 0; i < size; i++) {
+        Schema.Field oldField = ((AvroSchema) previousSchema).schemaObj.getFields().get(i);
+        Schema.Field newField = this.schemaObj.getFields().get(i);
+        if (!oldField.equals(newField)) {
+          log.info("New schema fields: {} is not equal to previous schema {}", newField.toString(),
+                  oldField.toString());
+          return false;
+        }
+      }
+      return true;
+    } catch (Exception e) {
+      log.error("Unexpected exception during compatibility check", e);
+      return false;
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

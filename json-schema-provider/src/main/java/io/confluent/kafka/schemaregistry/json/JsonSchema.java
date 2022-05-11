@@ -327,6 +327,11 @@ public class JsonSchema implements ParsedSchema {
   }
 
   @Override
+  public boolean isAddOnlyCompatible(ParsedSchema previousSchema) {
+    return false;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

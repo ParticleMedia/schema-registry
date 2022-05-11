@@ -39,6 +39,11 @@ public final class SchemaValidatorBuilder {
     return this;
   }
 
+  public SchemaValidatorBuilder addOnlyStrategy() {
+    this.strategy = (toValidate, existing) -> toValidate.isAddOnlyCompatible(existing);
+    return this;
+  }
+
   /**
    * Use a strategy that validates that a schema can be read by existing
    * schema(s) according to the JSON default schema resolution.

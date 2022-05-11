@@ -87,6 +87,8 @@ public interface ParsedSchema {
    */
   boolean isBackwardCompatible(ParsedSchema previousSchema);
 
+  boolean isAddOnlyCompatible(ParsedSchema previousSchema);
+
   /**
    * Checks the compatibility between this schema and the specified schemas.
    * <p/>
