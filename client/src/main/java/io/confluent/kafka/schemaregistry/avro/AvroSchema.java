@@ -183,13 +183,28 @@ public class AvroSchema implements ParsedSchema {
         log.info("New schema fields size is less than previous schema");
         return false;
       }
-      int size = ((AvroSchema) previousSchema).schemaObj.getFields().size();
-      for (int i = 0; i < size; i++) {
+      int oldSchemaSize = ((AvroSchema) previousSchema).schemaObj.getFields().size();
+      for (int i = 0; i < oldSchemaSize; i++) {
         Schema.Field oldField = ((AvroSchema) previousSchema).schemaObj.getFields().get(i);
         Schema.Field newField = this.schemaObj.getFields().get(i);
         if (!oldField.equals(newField)) {
           log.info("New schema fields: {} is not equal to previous schema {}", newField.toString(),
                   oldField.toString());
+          if (Schema.Type.RECORD != oldField.schema().getType()) {
+            return false;
+          } else {
+            boolean flag = new AvroSchema(newField.schema()).isAddOnlyCompatible(new AvroSchema(oldField.schema()));
+            if (!flag) {
+              return false;
+            }
+          }
+        }
+      }
+      int newSchemaSize = this.schemaObj.getFields().size();
+      for (int i = oldSchemaSize; i < newSchemaSize; i++) {
+        Schema.Field newField = this.schemaObj.getFields().get(i);
+        if (Schema.Type.UNION != newField.schema().getType()) {
+          log.info("New schema fields: {} is not UNION type", newField.toString());
           return false;
         }
       }

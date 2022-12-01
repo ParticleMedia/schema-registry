@@ -29,10 +29,7 @@ import org.apache.avro.util.Utf8;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchemaUtils;
@@ -170,6 +167,286 @@ public class AvroSchemaTest {
     expectConversionException(jsonTree("false"), createPrimitiveSchema("bytes"));
 
     expectConversionException(jsonTree("false"), createPrimitiveSchema("string"));
+  }
+
+  @Test
+  public void testAddOnlyCompatible() {
+    String json1 = "{\n" +
+            "  \"type\": \"record\",\n" +
+            "  \"name\": \"avro_example_data\",\n" +
+            "  \"namespace\": \"com.newsbreak.data.avro\",\n" +
+            "  \"doc\": \"avro_example_topic-value\",\n" +
+            "  \"fields\": [\n" +
+            "    {\n" +
+            "      \"name\": \"string1\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"tinyint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"smallint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"bigint1\",\n" +
+            "      \"type\": \"long\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"boolean1\",\n" +
+            "      \"type\": \"boolean\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"float1\",\n" +
+            "      \"type\": \"float\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"double1\",\n" +
+            "      \"type\": \"double\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"list1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"array\",\n" +
+            "        \"items\": \"string\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"map1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"map\",\n" +
+            "        \"values\": \"int\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"struct1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"record\",\n" +
+            "        \"name\": \"struct1_name\",\n" +
+            "        \"fields\": [\n" +
+            "          {\n" +
+            "            \"name\": \"s_int\",\n" +
+            "            \"type\": \"int\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_boolean\",\n" +
+            "            \"type\": \"boolean\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string\",\n" +
+            "            \"type\": \"string\"\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"nullableint\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ]\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+    String json2 = "{\n" +
+            "  \"type\": \"record\",\n" +
+            "  \"name\": \"avro_example_data\",\n" +
+            "  \"namespace\": \"com.newsbreak.data.avro\",\n" +
+            "  \"doc\": \"avro_example_topic-value\",\n" +
+            "  \"fields\": [\n" +
+            "    {\n" +
+            "      \"name\": \"string1\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"tinyint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"smallint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"bigint1\",\n" +
+            "      \"type\": \"long\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"boolean1\",\n" +
+            "      \"type\": \"boolean\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"float1\",\n" +
+            "      \"type\": \"float\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"double1\",\n" +
+            "      \"type\": \"double\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"list1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"array\",\n" +
+            "        \"items\": \"string\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"map1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"map\",\n" +
+            "        \"values\": \"int\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"struct1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"record\",\n" +
+            "        \"name\": \"struct1_name\",\n" +
+            "        \"fields\": [\n" +
+            "          {\n" +
+            "            \"name\": \"s_int\",\n" +
+            "            \"type\": \"int\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_boolean\",\n" +
+            "            \"type\": \"boolean\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string\",\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string2\",\n" +
+            "            \"type\": [\n" +
+            "              \"null\",\n" +
+            "              \"int\"\n" +
+            "             ]\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"nullableint\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ]\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int2\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ]\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+    String json3 = "{\n" +
+            "  \"type\": \"record\",\n" +
+            "  \"name\": \"avro_example_data\",\n" +
+            "  \"namespace\": \"com.newsbreak.data.avro\",\n" +
+            "  \"doc\": \"avro_example_topic-value\",\n" +
+            "  \"fields\": [\n" +
+            "    {\n" +
+            "      \"name\": \"string1\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"tinyint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"smallint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"bigint1\",\n" +
+            "      \"type\": \"long\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"boolean1\",\n" +
+            "      \"type\": \"boolean\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"float1\",\n" +
+            "      \"type\": \"float\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"double1\",\n" +
+            "      \"type\": \"double\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"list1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"array\",\n" +
+            "        \"items\": \"string\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"map1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"map\",\n" +
+            "        \"values\": \"int\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"struct1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"record\",\n" +
+            "        \"name\": \"struct1_name\",\n" +
+            "        \"fields\": [\n" +
+            "          {\n" +
+            "            \"name\": \"s_int\",\n" +
+            "            \"type\": \"int\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_boolean\",\n" +
+            "            \"type\": \"boolean\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string\",\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string2\",\n" +
+            "            \"type\": [\n" +
+            "              \"null\",\n" +
+            "              \"int\"\n" +
+            "             ]\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"nullableint\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ]\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int2\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+    AvroSchema oldSchema = new AvroSchema(json1);
+    AvroSchema newSchema = new AvroSchema(json2);
+    AvroSchema newSchema2 = new AvroSchema(json3);
+    assertEquals(true, newSchema.isAddOnlyCompatible(oldSchema));
+    assertEquals(false, newSchema2.isAddOnlyCompatible(oldSchema));
   }
 
   @Test
