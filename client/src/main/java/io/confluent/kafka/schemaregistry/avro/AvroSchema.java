@@ -193,7 +193,8 @@ public class AvroSchema implements ParsedSchema {
           if (Schema.Type.RECORD != oldField.schema().getType()) {
             return false;
           } else {
-            boolean flag = new AvroSchema(newField.schema()).isAddOnlyCompatible(new AvroSchema(oldField.schema()));
+            boolean flag = new AvroSchema(newField.schema())
+                    .isAddOnlyCompatible(new AvroSchema(oldField.schema()));
             if (!flag) {
               return false;
             }
