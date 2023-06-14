@@ -210,18 +210,6 @@ public class AvroSchema implements ParsedSchema {
             } else {
               return false;
             }
-//            if (Schema.Type.UNION != newField.schema().getType()) { // change field must be optional
-//              log.info("New schema fields: {} is not UNION type", newField.toString());
-//              return false;
-//            }
-//            if (!"null".equals(newField.schema().getType().getName())) { // new schema must be optional
-//              log.info("New schema fields: {} is not optional", newField.toString());
-//              return false;
-//            }
-//            if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
-//              log.info("New schema fields default value: {} is not null", newField.toString());
-//              return false;
-//            }
           } else if (Schema.Type.UNION == newField.schema().getType()) { // if new = optional
             if (!"null".equals(newField.schema().getTypes().get(0).getType().getName())) { // new schema must be optional
               log.info("New schema fields: {} is not optional", newField.toString());
@@ -256,26 +244,6 @@ public class AvroSchema implements ParsedSchema {
             log.info("New schema fields: {} is not UNION type", newField.toString());
             return false;
           }
-
-//          Schema newSchema = newField.schema().getTypes().size() == 2 ? newField.schema().getTypes().get(1) : newField.schema().getTypes().get(0);
-//          Schema oldSchema = oldField.schema().getTypes().size() == 2 ? oldField.schema().getTypes().get(1) : oldField.schema().getTypes().get(0);
-//          if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = optional record
-//            AvroSchema newAvroSchema = new AvroSchema(newSchema);
-//            boolean flag = newAvroSchema
-//                    .isAddOnlyCompatible(new AvroSchema(oldSchema));
-//            if (!flag) {
-//              return false;
-//            }
-//          } else if  (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = optional array
-//
-//            boolean flag = new AvroSchema(newSchema.getElementType())
-//                    .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
-//            if (!flag) {
-//              return false;
-//            }
-//          } else {
-//            return false;
-//          }
         }
       }
       // add field validate
