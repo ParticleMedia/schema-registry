@@ -266,7 +266,6 @@ public class AvroSchema implements ParsedSchema {
       return true;
     } catch (Exception e) {
       log.error("Unexpected exception during compatibility check", e);
-      System.out.println(e.getMessage());
       return false;
     }
   }
