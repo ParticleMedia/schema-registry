@@ -19,11 +19,7 @@ package io.confluent.kafka.schemaregistry.avro;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 
-import org.apache.avro.Schema;
-import org.apache.avro.SchemaValidationException;
-import org.apache.avro.SchemaValidator;
-import org.apache.avro.SchemaValidatorBuilder;
-import org.apache.avro.Schemas;
+import org.apache.avro.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -187,31 +183,122 @@ public class AvroSchema implements ParsedSchema {
       for (int i = 0; i < oldSchemaSize; i++) {
         Schema.Field oldField = ((AvroSchema) previousSchema).schemaObj.getFields().get(i);
         Schema.Field newField = this.schemaObj.getFields().get(i);
+        // change field validate
         if (!oldField.equals(newField)) {
           log.info("New schema fields: {} is not equal to previous schema {}", newField.toString(),
                   oldField.toString());
-          if (Schema.Type.RECORD != oldField.schema().getType()) {
-            return false;
-          } else {
-            boolean flag = new AvroSchema(newField.schema())
-                    .isAddOnlyCompatible(new AvroSchema(oldField.schema()));
-            if (!flag) {
+          // complex type can be require
+          if (Schema.Type.RECORD == newField.schema().getType() || Schema.Type.ARRAY == newField.schema().getType() || Schema.Type.MAP == newField.schema().getType()) {
+            Schema newSchema = newField.schema();
+            Schema oldSchema = oldField.schema();
+            if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = record
+              AvroSchema newAvroSchema = new AvroSchema(newSchema);
+              boolean flag = newAvroSchema
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema));
+              if (!flag) {
+                return false;
+              }
+            } else if (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = array
+              boolean flag = new AvroSchema(newSchema.getElementType())
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
+              if (!flag) {
+                return false;
+              }
+            } else if (Schema.Type.MAP == newSchema.getType()) { // if old = new = array
+              // todo
+              return false;
+            } else {
               return false;
             }
+//            if (Schema.Type.UNION != newField.schema().getType()) { // change field must be optional
+//              log.info("New schema fields: {} is not UNION type", newField.toString());
+//              return false;
+//            }
+//            if (!"null".equals(newField.schema().getType().getName())) { // new schema must be optional
+//              log.info("New schema fields: {} is not optional", newField.toString());
+//              return false;
+//            }
+//            if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
+//              log.info("New schema fields default value: {} is not null", newField.toString());
+//              return false;
+//            }
+          } else if (Schema.Type.UNION == newField.schema().getType()) { // if new = optional
+            if (!"null".equals(newField.schema().getTypes().get(0).getType().getName())) { // new schema must be optional
+              log.info("New schema fields: {} is not optional", newField.toString());
+              return false;
+            }
+            if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
+              log.info("New schema fields default value: {} is not null", newField.toString());
+              return false;
+            }
+            Schema newSchema = newField.schema().getTypes().get(1).getElementType();
+            Schema oldSchema = oldField.schema().getTypes().get(1).getElementType();
+            if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = record
+              AvroSchema newAvroSchema = new AvroSchema(newSchema);
+              boolean flag = newAvroSchema
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema));
+              if (!flag) {
+                return false;
+              }
+            } else if (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = array
+              boolean flag = new AvroSchema(newSchema.getElementType())
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
+              if (!flag) {
+                return false;
+              }
+            } else if (Schema.Type.MAP == newSchema.getType()) { // if old = new = array
+              // todo
+              return false;
+            } else {
+              return false;
+            }
+          } else { // if new is basic required type
+            log.info("New schema fields: {} is not UNION type", newField.toString());
+            return false;
           }
+
+//          Schema newSchema = newField.schema().getTypes().size() == 2 ? newField.schema().getTypes().get(1) : newField.schema().getTypes().get(0);
+//          Schema oldSchema = oldField.schema().getTypes().size() == 2 ? oldField.schema().getTypes().get(1) : oldField.schema().getTypes().get(0);
+//          if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = optional record
+//            AvroSchema newAvroSchema = new AvroSchema(newSchema);
+//            boolean flag = newAvroSchema
+//                    .isAddOnlyCompatible(new AvroSchema(oldSchema));
+//            if (!flag) {
+//              return false;
+//            }
+//          } else if  (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = optional array
+//
+//            boolean flag = new AvroSchema(newSchema.getElementType())
+//                    .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
+//            if (!flag) {
+//              return false;
+//            }
+//          } else {
+//            return false;
+//          }
         }
       }
+      // add field validate
       int newSchemaSize = this.schemaObj.getFields().size();
       for (int i = oldSchemaSize; i < newSchemaSize; i++) {
         Schema.Field newField = this.schemaObj.getFields().get(i);
-        if (Schema.Type.UNION != newField.schema().getType()) {
+        if (Schema.Type.UNION != newField.schema().getType()) { // add field must be optional
           log.info("New schema fields: {} is not UNION type", newField.toString());
+          return false;
+        }
+        if (!"null".equals(newField.schema().getTypes().get(0).getType().getName())) { // new schema must be optional
+          log.info("New schema fields: {} is not optional", newField.toString());
+          return false;
+        }
+        if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
+          log.info("New schema fields default value: {} is not null", newField.toString());
           return false;
         }
       }
       return true;
     } catch (Exception e) {
       log.error("Unexpected exception during compatibility check", e);
+      System.out.println(e.getMessage());
       return false;
     }
   }

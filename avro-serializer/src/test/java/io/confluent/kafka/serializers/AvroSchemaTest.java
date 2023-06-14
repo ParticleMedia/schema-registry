@@ -171,7 +171,7 @@ public class AvroSchemaTest {
 
   @Test
   public void testAddOnlyCompatible() {
-    String json1 = "{\n" +
+    String json = "{\n" +
             "  \"type\": \"record\",\n" +
             "  \"name\": \"avro_example_data\",\n" +
             "  \"namespace\": \"com.newsbreak.data.avro\",\n" +
@@ -250,6 +250,152 @@ public class AvroSchemaTest {
             "        \"null\",\n" +
             "        \"int\"\n" +
             "      ]\n" +
+            "    },\n" +
+            "      {\n" +
+            "         \"name\":\"list2\",\n" +
+            "         \"type\":[\n" +
+            "            \"null\",\n" +
+            "            {\n" +
+            "               \"type\":\"array\",\n" +
+            "               \"items\":{\n" +
+            "                  \"type\":\"record\",\n" +
+            "                  \"name\":\"maxk_ads_record\",\n" +
+            "                  \"fields\":[\n" +
+            "                     {\n" +
+            "                        \"name\":\"ad_id\",\n" +
+            "                        \"type\":[\n" +
+            "                           \"null\",\n" +
+            "                           \"long\"\n" +
+            "                        ],\n" +
+            "                        \"default\":null\n" +
+            "                     }\n" +
+            "                  ]\n" +
+            "               }\n" +
+            "            }\n" +
+            "         ],\n" +
+            "         \"default\":null\n" +
+            "      }\n"+
+            "  ]\n" +
+            "}";
+    String json1 = "{\n" +
+            "  \"type\": \"record\",\n" +
+            "  \"name\": \"avro_example_data\",\n" +
+            "  \"namespace\": \"com.newsbreak.data.avro\",\n" +
+            "  \"doc\": \"avro_example_topic-value\",\n" +
+            "  \"fields\": [\n" +
+            "    {\n" +
+            "      \"name\": \"string1\",\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"int1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"tinyint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"smallint1\",\n" +
+            "      \"type\": \"int\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"bigint1\",\n" +
+            "      \"type\": \"long\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"boolean1\",\n" +
+            "      \"type\": \"boolean\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"float1\",\n" +
+            "      \"type\": \"float\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"double1\",\n" +
+            "      \"type\": \"double\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"list1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"array\",\n" +
+            "        \"items\": \"string\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"map1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"map\",\n" +
+            "        \"values\": \"int\"\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"struct1\",\n" +
+            "      \"type\": {\n" +
+            "        \"type\": \"record\",\n" +
+            "        \"name\": \"struct1_name\",\n" +
+            "        \"fields\": [\n" +
+            "          {\n" +
+            "            \"name\": \"s_int\",\n" +
+            "            \"type\": \"int\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_boolean\",\n" +
+            "            \"type\": \"boolean\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string\",\n" +
+            "            \"type\": \"string\"\n" +
+            "          },\n" +
+            "          {\n" +
+            "            \"name\": \"s_string2\",\n" +
+            "            \"type\": [\n" +
+            "              \"null\",\n" +
+            "              \"int\"\n" +
+            "             ],\n" +
+            "            \"default\":null\n" +
+            "          }\n" +
+            "        ]\n" +
+            "      }\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"name\": \"nullableint\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ]\n" +
+            "    },\n" +
+            "    {\n" +
+            "         \"name\":\"list2\",\n" +
+            "         \"type\":[\n" +
+            "            \"null\",\n" +
+            "            {\n" +
+            "               \"type\":\"array\",\n" +
+            "               \"items\":{\n" +
+            "                  \"type\":\"record\",\n" +
+            "                  \"name\":\"maxk_ads_record\",\n" +
+            "                  \"fields\":[\n" +
+            "                     {\n" +
+            "                        \"name\":\"ad_id\",\n" +
+            "                        \"type\":[\n" +
+            "                           \"null\",\n" +
+            "                           \"long\"\n" +
+            "                        ],\n" +
+            "                        \"default\":null\n" +
+            "                     }\n" +
+            "                  ]\n" +
+            "               }\n" +
+            "            }\n" +
+            "         ],\n" +
+            "         \"default\":null\n" +
+            "     },\n"+
+            "    {\n" +
+            "      \"name\": \"int2\",\n" +
+            "      \"type\": [\n" +
+            "        \"null\",\n" +
+            "        \"int\"\n" +
+            "      ],\n" +
+            "      \"default\":null\n" +
             "    }\n" +
             "  ]\n" +
             "}";
@@ -340,12 +486,33 @@ public class AvroSchemaTest {
             "        \"int\"\n" +
             "      ]\n" +
             "    },\n" +
+            "      {\n" +
+            "         \"name\":\"list2\",\n" +
+            "         \"type\":[\n" +
+            "            \"null\",\n" +
+            "            {\n" +
+            "               \"type\":\"array\",\n" +
+            "               \"items\":{\n" +
+            "                  \"type\":\"record\",\n" +
+            "                  \"name\":\"maxk_ads_record\",\n" +
+            "                  \"fields\":[\n" +
+            "                     {\n" +
+            "                        \"name\":\"ad_id\",\n" +
+            "                        \"type\":[\n" +
+            "                           \"null\",\n" +
+            "                           \"long\"\n" +
+            "                        ],\n" +
+            "                        \"default\":null\n" +
+            "                     }\n" +
+            "                  ]\n" +
+            "               }\n" +
+            "            }\n" +
+            "         ],\n" +
+            "         \"default\":null\n" +
+            "      },\n" +
             "    {\n" +
             "      \"name\": \"int2\",\n" +
-            "      \"type\": [\n" +
-            "        \"null\",\n" +
-            "        \"int\"\n" +
-            "      ]\n" +
+            "      \"type\": \"int\"\n" +
             "    }\n" +
             "  ]\n" +
             "}";
@@ -418,13 +585,6 @@ public class AvroSchemaTest {
             "          {\n" +
             "            \"name\": \"s_string\",\n" +
             "            \"type\": \"string\"\n" +
-            "          },\n" +
-            "          {\n" +
-            "            \"name\": \"s_string2\",\n" +
-            "            \"type\": [\n" +
-            "              \"null\",\n" +
-            "              \"int\"\n" +
-            "             ]\n" +
             "          }\n" +
             "        ]\n" +
             "      }\n" +
@@ -436,17 +596,47 @@ public class AvroSchemaTest {
             "        \"int\"\n" +
             "      ]\n" +
             "    },\n" +
-            "    {\n" +
-            "      \"name\": \"int2\",\n" +
-            "      \"type\": \"int\"\n" +
-            "    }\n" +
+            "      {\n" +
+            "         \"name\":\"list2\",\n" +
+            "         \"type\":[\n" +
+            "            \"null\",\n" +
+            "            {\n" +
+            "               \"type\":\"array\",\n" +
+            "               \"items\":{\n" +
+            "                  \"type\":\"record\",\n" +
+            "                  \"name\":\"maxk_ads_record\",\n" +
+            "                  \"fields\":[\n" +
+            "                     {\n" +
+            "                        \"name\":\"ad_id\",\n" +
+            "                        \"type\":[\n" +
+            "                           \"null\",\n" +
+            "                           \"long\"\n" +
+            "                        ],\n" +
+            "                        \"default\":null\n" +
+            "                     },\n" +
+            "                     {\n" +
+            "                        \"name\":\"ad_id2\",\n" +
+            "                        \"type\":[\n" +
+            "                           \"null\",\n" +
+            "                           \"string\"\n" +
+            "                        ],\n" +
+            "                        \"default\":null\n" +
+            "                     }\n" +
+            "                  ]\n" +
+            "               }\n" +
+            "            }\n" +
+            "         ],\n" +
+            "         \"default\":null\n" +
+            "      }\n"+
             "  ]\n" +
             "}";
-    AvroSchema oldSchema = new AvroSchema(json1);
-    AvroSchema newSchema = new AvroSchema(json2);
-    AvroSchema newSchema2 = new AvroSchema(json3);
-    assertEquals(true, newSchema.isAddOnlyCompatible(oldSchema));
+    AvroSchema oldSchema = new AvroSchema(json);
+    AvroSchema newSchema1 = new AvroSchema(json1);
+    AvroSchema newSchema2 = new AvroSchema(json2);
+    AvroSchema newSchema3 = new AvroSchema(json3);
+    assertEquals(true, newSchema1.isAddOnlyCompatible(oldSchema));
     assertEquals(false, newSchema2.isAddOnlyCompatible(oldSchema));
+    assertEquals(true, newSchema3.isAddOnlyCompatible(oldSchema));
   }
 
   @Test
