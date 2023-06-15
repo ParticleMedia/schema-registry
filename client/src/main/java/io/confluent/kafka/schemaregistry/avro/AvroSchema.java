@@ -219,8 +219,8 @@ public class AvroSchema implements ParsedSchema {
               log.info("New schema fields default value: {} is not null", newField.toString());
               return false;
             }
-            Schema newSchema = newField.schema().getTypes().get(1).getElementType();
-            Schema oldSchema = oldField.schema().getTypes().get(1).getElementType();
+            Schema newSchema = newField.schema().getTypes().get(1);
+            Schema oldSchema = oldField.schema().getTypes().get(1);
             if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = record
               AvroSchema newAvroSchema = new AvroSchema(newSchema);
               boolean flag = newAvroSchema
