@@ -31,7 +31,7 @@ public class CompatibilityChecker {
 
   // Check if data produced by the new schema can be read by the previous schema
   private static final SchemaValidator FORWARD_VALIDATOR =
-      new SchemaValidatorBuilder().canBeReadStrategy()
+      new SchemaValidatorBuilder().addOnlyStrategy()
       .validateLatest();
   public static final CompatibilityChecker FORWARD_CHECKER = new CompatibilityChecker(
       FORWARD_VALIDATOR);
@@ -69,6 +69,12 @@ public class CompatibilityChecker {
   public static final CompatibilityChecker NO_OP_CHECKER =
       new CompatibilityChecker(NO_OP_VALIDATOR);
 
+  private static final SchemaValidator ADDONLY_VALIDATOR =
+          new SchemaValidatorBuilder().addOnlyStrategy()
+                  .validateLatest();
+  public static final CompatibilityChecker ADDONLY_CHECKER = new CompatibilityChecker(
+          ADDONLY_VALIDATOR);
+
   private final SchemaValidator validator;
 
   private CompatibilityChecker(SchemaValidator validator) {
@@ -101,6 +107,8 @@ public class CompatibilityChecker {
         return CompatibilityChecker.FULL_CHECKER;
       case FULL_TRANSITIVE:
         return CompatibilityChecker.FULL_TRANSITIVE_CHECKER;
+      case ADDONLY:
+        return CompatibilityChecker.ADDONLY_CHECKER;
       default:
         throw new IllegalArgumentException("Invalid level " + level);
     }

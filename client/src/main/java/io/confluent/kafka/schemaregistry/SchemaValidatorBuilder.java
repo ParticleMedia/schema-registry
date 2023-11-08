@@ -66,6 +66,11 @@ public final class SchemaValidatorBuilder {
     return this;
   }
 
+  public SchemaValidatorBuilder addOnlyStrategy() {
+    this.strategy = (toValidate, existing) -> toValidate.isAddOnlyCompatible(existing);
+    return this;
+  }
+
   public SchemaValidator validateLatest() {
     valid();
     return (toValidate, schemasInOrder) -> {

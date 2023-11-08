@@ -23,7 +23,8 @@ public enum CompatibilityLevel {
   FORWARD,
   FORWARD_TRANSITIVE,
   FULL,
-  FULL_TRANSITIVE;
+  FULL_TRANSITIVE,
+  ADDONLY;
 
   public final String name;
 

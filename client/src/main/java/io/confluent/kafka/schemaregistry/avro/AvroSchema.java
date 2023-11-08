@@ -22,6 +22,8 @@ import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.stream.Collectors;
+
+import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaCompatibility;
 import org.apache.avro.SchemaCompatibility.Incompatibility;
@@ -201,6 +203,114 @@ public class AvroSchema implements ParsedSchema {
       return result.getResult().getIncompatibilities().stream()
           .map(Incompatibility::toString)
           .collect(Collectors.toList());
+    } catch (Exception e) {
+      log.error("Unexpected exception during compatibility check", e);
+      return Collections.singletonList(
+              "Unexpected exception during compatibility check: " + e.getMessage());
+    }
+  }
+
+  @Override
+  public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
+    log.info("is add only compatible");
+    if (!schemaType().equals(previousSchema.schemaType())) {
+      return Collections.singletonList("Incompatible because of different schema type");
+    }
+    try {
+      if (this.schemaObj.getFields()
+              .size() < ((AvroSchema) previousSchema).schemaObj.getFields().size()) {
+        log.info("New schema fields size is less than previous schema");
+        return Collections.singletonList("New schema fields size is less than previous schema");
+      }
+      int oldSchemaSize = ((AvroSchema) previousSchema).schemaObj.getFields().size();
+      for (int i = 0; i < oldSchemaSize; i++) {
+        Schema.Field oldField = ((AvroSchema) previousSchema).schemaObj.getFields().get(i);
+        Schema.Field newField = this.schemaObj.getFields().get(i);
+        if (!oldField.equals(newField)) {
+          log.info("New schema fields: {} is not equal to previous schema {}", newField.toString(),
+                  oldField.toString());
+          // complex type can be require
+          if (Schema.Type.RECORD == newField.schema().getType()
+                  || Schema.Type.ARRAY == newField.schema().getType()
+                  || Schema.Type.MAP == newField.schema().getType()) {
+            Schema newSchema = newField.schema();
+            Schema oldSchema = oldField.schema();
+            if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = record
+              AvroSchema newAvroSchema = new AvroSchema(newSchema);
+              List<String> compatibleCheckResult = newAvroSchema
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema));
+              if (!compatibleCheckResult.isEmpty()) {
+                return compatibleCheckResult;
+              }
+            } else if (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = array
+              List<String> compatibleCheckResult = new AvroSchema(newSchema.getElementType())
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
+              if (!compatibleCheckResult.isEmpty()) {
+                return compatibleCheckResult;
+              }
+            } else if (Schema.Type.MAP == newSchema.getType()) { // if old = new = array
+              // todo
+              return Collections.singletonList("Map type not support");
+            } else {
+              return Collections.singletonList(String.format("Type %s not support", newSchema.getType().toString()));
+            }
+          } else if (Schema.Type.UNION == newField.schema().getType()) { // if new = optional
+            if (!"null".equals(newField.schema().getTypes().get(0).getType().getName())) { // new schema must be optional
+              log.info("New schema fields: {} is not optional", newField.toString());
+              return Collections.singletonList(String.format("New schema field %s is not optional", newField.toString()));
+            }
+            if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
+              log.info("New schema fields default value: {} is not null", newField.toString());
+              return Collections.singletonList(String.format("New schema field %s default value is not null", newField.toString()));
+            }
+            Schema newSchema = newField.schema().getTypes().get(1);
+            Schema oldSchema = oldField.schema().getTypes().get(1);
+            if (Schema.Type.RECORD == newSchema.getType()) { // if old = new = record
+              AvroSchema newAvroSchema = new AvroSchema(newSchema);
+              List<String> compatibleCheckResult = newAvroSchema
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema));
+              if (!compatibleCheckResult.isEmpty()) {
+                return compatibleCheckResult;
+              }
+            } else if (Schema.Type.ARRAY == newSchema.getType()) { // if old = new = array
+              List<String> compatibleCheckResult = new AvroSchema(newSchema.getElementType())
+                      .isAddOnlyCompatible(new AvroSchema(oldSchema.getElementType()));
+              if (!compatibleCheckResult.isEmpty()) {
+                return compatibleCheckResult;
+              }
+            } else if (Schema.Type.MAP == newSchema.getType()) { // if old = new = array
+              // todo
+              return Collections.singletonList("Map type not support");
+            } else {
+              return Collections.singletonList(String.format("Type %s not support", newSchema.getType().toString()));
+            }
+          } else { // if new is basic required type
+            log.info("New schema fields: {} is not UNION type", newField.toString());
+            return Collections.singletonList(String.format("New schema field %s is not UNION type", newField.toString()));
+          }
+        }
+      }
+      // add field validate
+      int newSchemaSize = this.schemaObj.getFields().size();
+      for (int i = oldSchemaSize; i < newSchemaSize; i++) {
+        Schema.Field newField = this.schemaObj.getFields().get(i);
+        if (Schema.Type.UNION != newField.schema().getType()) { // add field must be optional
+          log.info("New schema fields: {} is not UNION type", newField.toString());
+          return Collections.singletonList(
+                  String.format("New schema field %s is not UNION type", newField.toString()));
+        }
+        if (!"null".equals(newField.schema().getTypes().get(0).getType().getName())) { // new schema must be optional
+          log.info("New schema fields: {} is not optional", newField.toString());
+          return Collections.singletonList(
+                  String.format("New schema field %s is not optional", newField.toString()));
+        }
+        if (!newField.hasDefaultValue() || !JsonProperties.Null.class.getName().equals(newField.defaultVal().getClass().getName())) {
+          log.info("New schema fields default value: {} is not null", newField.toString());
+          return Collections.singletonList(
+                  String.format("New schema field %s default value is not null", newField.toString()));
+        }
+      }
+      return Collections.emptyList();
     } catch (Exception e) {
       log.error("Unexpected exception during compatibility check", e);
       return Collections.singletonList(

@@ -98,6 +98,8 @@ public interface ParsedSchema {
    */
   List<String> isBackwardCompatible(ParsedSchema previousSchema);
 
+  List<String> isAddOnlyCompatible(ParsedSchema previousSchema);
+
   /**
    * Checks the compatibility between this schema and the specified schemas.
    * <p/>

@@ -354,6 +354,11 @@ public class JsonSchema implements ParsedSchema {
   }
 
   @Override
+  public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
+    return Collections.singletonList("Not support for Json schema");
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
