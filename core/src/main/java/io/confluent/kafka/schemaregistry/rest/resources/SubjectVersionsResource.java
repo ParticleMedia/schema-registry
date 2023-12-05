@@ -77,6 +77,8 @@ public class SubjectVersionsResource {
 
   private static final Logger log = LoggerFactory.getLogger(SubjectVersionsResource.class);
 
+  private static final String DEFAULT_BUSINESS_NAME = "default";
+
   private final KafkaSchemaRegistry schemaRegistry;
 
   private final RequestHeaderBuilder requestHeaderBuilder = new RequestHeaderBuilder();
@@ -318,9 +320,10 @@ public class SubjectVersionsResource {
       @QueryParam("normalize") boolean normalize,
       @Parameter(description = "Schema", required = true)
       @NotNull RegisterSchemaRequest request) {
-    log.info("Registering new schema: subject {}, version {}, id {}, type {}, schema size {}",
+    log.info("Registering new schema: subject {}, version {}, id {}, type {}, schema size {}, business {}",
              subjectName, request.getVersion(), request.getId(), request.getSchemaType(),
-            request.getSchema() == null ? 0 : request.getSchema().length());
+            request.getSchema() == null ? 0 : request.getSchema().length(),
+            request.getBusiness());
 
     if (subjectName != null && CharMatcher.javaIsoControl().matchesAnyOf(subjectName)) {
       throw Errors.invalidSubjectException(subjectName);
@@ -336,7 +339,8 @@ public class SubjectVersionsResource {
         request.getId() != null ? request.getId() : -1,
         request.getSchemaType() != null ? request.getSchemaType() : AvroSchema.TYPE,
         request.getReferences(),
-        request.getSchema()
+        request.getSchema(),
+        request.getBusiness() == null ? DEFAULT_BUSINESS_NAME : request.getBusiness()
     );
     int id;
     try {

@@ -41,6 +41,9 @@ public class RegisterSchemaRequest {
   private List<SchemaReference> references = null;
   private String schema;
 
+  //Following are additional information provided for internal management.
+  private String business;
+
   public static RegisterSchemaRequest fromJson(String json) throws IOException {
     return JacksonMapper.INSTANCE.readValue(json, RegisterSchemaRequest.class);
   }
@@ -101,6 +104,16 @@ public class RegisterSchemaRequest {
     this.schema = schema;
   }
 
+  @JsonProperty("business")
+  public String getBusiness() {
+    return this.business;
+  }
+
+  @JsonProperty("business")
+  public void setBusiness(String business) {
+    this.business = business;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -114,12 +127,13 @@ public class RegisterSchemaRequest {
         && Objects.equals(id, that.id)
         && Objects.equals(schemaType, that.schemaType)
         && Objects.equals(references, that.references)
-        && Objects.equals(schema, that.schema);
+        && Objects.equals(schema, that.schema)
+        && Objects.equals(business, that.business);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, references, version, id, schema);
+    return Objects.hash(schemaType, references, version, id, schema, business);
   }
 
   @Override
@@ -134,6 +148,7 @@ public class RegisterSchemaRequest {
     }
     buf.append("schemaType=").append(this.schemaType).append(",");
     buf.append("references=").append(this.references).append(",");
+    buf.append("business=").append(this.business).append(",");
     buf.append("schema=").append(schema).append("}");
     return buf.toString();
   }

@@ -786,7 +786,8 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
             schema.getId(),
             schema.getSchemaType(),
             schema.getReferences(),
-            schema.getSchema()
+            schema.getSchema(),
+            schema.getBusiness()
         );
         matchingSchema = lookUpSchemaUnderSubject(
             qualSub.toQualifiedSubject(), qualSchema, normalize, lookupDeletedSchema);
@@ -817,7 +818,8 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
                                              schemaIdAndSubjects.getSchemaId(),
                                              schema.getSchemaType(),
                                              schema.getReferences(),
-                                             schema.getSchema());
+                                             schema.getSchema(),
+                                             schema.getBusiness());
           return matchingSchema;
         }
       }
@@ -871,6 +873,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
     registerSchemaRequest.setReferences(schema.getReferences());
     registerSchemaRequest.setVersion(schema.getVersion());
     registerSchemaRequest.setId(schema.getId());
+    registerSchemaRequest.setBusiness(schema.getBusiness());
     log.debug(String.format("Forwarding registering schema request %s to %s",
                             registerSchemaRequest, baseUrl));
     try {
@@ -1020,6 +1023,11 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
         || schema.getSchema().trim().isEmpty()) {
       log.error("Empty schema");
       throw new InvalidSchemaException("Empty schema");
+    }
+    //Add compulsory business check logic
+    if (schema.getBusiness() == null || "".equals(schema.getBusiness())) {
+      log.error("No business found in schema definition:{}", schema);
+      throw new InvalidSchemaException("No business in schema");
     }
     ParsedSchema parsedSchema = parseSchema(schema, isNew);
     try {
@@ -1828,7 +1836,8 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
             .map(ref -> new io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference(
                 ref.getName(), ref.getSubject(), ref.getVersion()))
             .collect(Collectors.toList()),
-        schemaValue.getSchema()
+        schemaValue.getSchema(),
+        schemaValue.getBusiness()
     );
   }
 

@@ -46,6 +46,9 @@ public class Schema implements Comparable<Schema> {
   private List<SchemaReference> references;
   private String schema;
 
+  //Following are additional information provided for internal management.
+  private String business;
+
   @JsonCreator
   public Schema(@JsonProperty("subject") String subject,
                 @JsonProperty("version") Integer version,
@@ -59,6 +62,24 @@ public class Schema implements Comparable<Schema> {
     this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
+    this.business = null;
+  }
+
+  @JsonCreator
+  public Schema(@JsonProperty("subject") String subject,
+                @JsonProperty("version") Integer version,
+                @JsonProperty("id") Integer id,
+                @JsonProperty("schemaType") String schemaType,
+                @JsonProperty("references") List<SchemaReference> references,
+                @JsonProperty("schema") String schema,
+                @JsonProperty("business") String business) {
+    this.subject = subject;
+    this.version = version;
+    this.id = id;
+    this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
+    this.references = references != null ? references : Collections.emptyList();
+    this.schema = schema;
+    this.business = business;
   }
 
   @io.swagger.v3.oas.annotations.media.Schema(description = SUBJECT_DESC)
@@ -128,6 +149,16 @@ public class Schema implements Comparable<Schema> {
     this.schema = schema;
   }
 
+  @JsonProperty("business")
+  public String getBusiness() {
+    return this.business;
+  }
+
+  @JsonProperty("business")
+  public void setBusiness(String business) {
+    this.business = business;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -142,7 +173,8 @@ public class Schema implements Comparable<Schema> {
         && Objects.equals(id, schema1.id)
         && Objects.equals(schemaType, schema1.schemaType)
         && Objects.equals(references, schema1.references)
-        && Objects.equals(schema, schema1.schema);
+        && Objects.equals(schema, schema1.schema)
+        && Objects.equals(business, schema1.business);
   }
 
   @Override
@@ -158,6 +190,7 @@ public class Schema implements Comparable<Schema> {
     sb.append("id=" + this.id + ",");
     sb.append("schemaType=" + this.schemaType + ",");
     sb.append("references=" + this.references + ",");
+    sb.append("business=" + this.business + ",");
     sb.append("schema=" + this.schema + "}");
     return sb.toString();
   }

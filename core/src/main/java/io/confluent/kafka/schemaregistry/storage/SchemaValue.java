@@ -46,6 +46,8 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
   @NotEmpty
   private boolean deleted;
 
+  private String business;
+
   @VisibleForTesting
   public SchemaValue(@JsonProperty("subject") String subject,
                      @JsonProperty("version") Integer version,
@@ -76,6 +78,25 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.deleted = deleted;
   }
 
+  @JsonCreator
+  public SchemaValue(@JsonProperty("subject") String subject,
+                     @JsonProperty("version") Integer version,
+                     @JsonProperty("id") Integer id,
+                     @JsonProperty("schemaType") String schemaType,
+                     @JsonProperty("references") List<SchemaReference> references,
+                     @JsonProperty("schema") String schema,
+                     @JsonProperty("deleted") boolean deleted,
+                     @JsonProperty("business") String business) {
+    super(subject);
+    this.version = version;
+    this.id = id;
+    this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
+    this.references = references != null ? references : Collections.emptyList();
+    this.schema = schema;
+    this.deleted = deleted;
+    this.business = business;
+  }
+
   public SchemaValue(Schema schemaEntity) {
     super(schemaEntity.getSubject());
     this.version = schemaEntity.getVersion();
@@ -88,6 +109,7 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
         .collect(Collectors.toList());
     this.schema = schemaEntity.getSchema();
     this.deleted = false;
+    this.business = schemaEntity.getBusiness();
   }
 
   @JsonProperty("version")
@@ -151,6 +173,17 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.deleted = deleted;
   }
 
+
+  @JsonProperty("business")
+  public String getBusiness() {
+    return this.business;
+  }
+
+  @JsonProperty("business")
+  public void setBusiness(String business) {
+    this.business = business;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -183,6 +216,9 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     if (deleted != that.deleted) {
       return false;
     }
+    if (business != that.business) {
+      return false;
+    }
 
     return true;
   }
@@ -196,6 +232,7 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     result = 31 * result + schema.hashCode();
     result = 31 * result + references.hashCode();
     result = 31 * result + (deleted ? 1 : 0);
+    result = 31 * result + business.hashCode();
     return result;
   }
 
@@ -208,6 +245,7 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     sb.append("schemaType=" + this.schemaType + ",");
     sb.append("references=" + this.references + ",");
     sb.append("schema=" + this.schema + ",");
+    sb.append("business=" + this.business + ",");
     sb.append("deleted=" + this.deleted + "}");
     return sb.toString();
   }
