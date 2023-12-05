@@ -216,7 +216,7 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     if (deleted != that.deleted) {
       return false;
     }
-    if (business != that.business) {
+    if (this.business.equals(that.business)) {
       return false;
     }
 
