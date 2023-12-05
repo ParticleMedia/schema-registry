@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaValue extends SubjectValue implements Comparable<SchemaValue> {
 
+  private static final String DEFAULT_BUSINESS = "default";
+
   @Min(1)
   private Integer version;
   @Min(0)
@@ -59,9 +61,10 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.id = id;
     this.schema = schema;
     this.deleted = deleted;
+    this.business = DEFAULT_BUSINESS;
   }
 
-  @JsonCreator
+//  @JsonCreator
   public SchemaValue(@JsonProperty("subject") String subject,
                      @JsonProperty("version") Integer version,
                      @JsonProperty("id") Integer id,
@@ -76,6 +79,7 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
     this.deleted = deleted;
+    this.business = DEFAULT_BUSINESS;
   }
 
   @JsonCreator
@@ -94,7 +98,11 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
     this.deleted = deleted;
-    this.business = business;
+    if (business != null) {
+      this.business = business;
+    } else {
+      this.business = DEFAULT_BUSINESS;
+    }
   }
 
   public SchemaValue(Schema schemaEntity) {

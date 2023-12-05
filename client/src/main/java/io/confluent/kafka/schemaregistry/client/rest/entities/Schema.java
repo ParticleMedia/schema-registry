@@ -39,6 +39,8 @@ public class Schema implements Comparable<Schema> {
   public static final String REFERENCES_DESC = "References to other schemas";
   public static final String SCHEMA_DESC = "Schema definition string";
 
+  private static final String DEFAULT_BUSINESS = "default";
+
   private String subject;
   private Integer version;
   private Integer id;
@@ -49,7 +51,7 @@ public class Schema implements Comparable<Schema> {
   //Following are additional information provided for internal management.
   private String business;
 
-  @JsonCreator
+//  @JsonCreator
   public Schema(@JsonProperty("subject") String subject,
                 @JsonProperty("version") Integer version,
                 @JsonProperty("id") Integer id,
@@ -62,7 +64,7 @@ public class Schema implements Comparable<Schema> {
     this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
-    this.business = null;
+    this.business = DEFAULT_BUSINESS;
   }
 
   @JsonCreator
@@ -79,7 +81,11 @@ public class Schema implements Comparable<Schema> {
     this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
-    this.business = business;
+    if (business != null) {
+      this.business = business;
+    } else {
+      this.business = DEFAULT_BUSINESS;
+    }
   }
 
   @io.swagger.v3.oas.annotations.media.Schema(description = SUBJECT_DESC)
