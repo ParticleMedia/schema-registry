@@ -9,6 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+
 /**
  * Created by ricky on 2023/12/22.
  */
@@ -351,7 +355,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringValidAddScalar1, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddScalar1], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddScalar1], errorMsg result:" + errorMessages);
+        assertEquals(0, errorMessages.size());
     }
 
     @Test
@@ -363,7 +369,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringValidAddMap1, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMap1], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMap1], errorMsg result:" + errorMessages);
+        assertEquals(0, errorMessages.size());
     }
 
     @Test
@@ -375,7 +383,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringValidAddMsg1, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMsg1], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMsg1], errorMsg result:" + errorMessages);
+        assertEquals(0, errorMessages.size());
     }
 
     @Test
@@ -387,7 +397,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringValidAddMixed1, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMixed1], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringValidAddMixed1], errorMsg result:" + errorMessages);
+        assertEquals(0, errorMessages.size());
     }
 
     @Test
@@ -399,7 +411,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringInvalidAddMixed1, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInvalidAddMixed1], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInvalidAddMixed1], errorMsg result:" + errorMessages);
+        assertNotEquals(0, errorMessages.size());
     }
 
     @Test
@@ -411,7 +425,9 @@ public class AddOnlySchemaCheckerTest {
         dependencies.put("common", commonSchemaString);
         ProtobufSchema originalSchema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringInValidAddMixedNonSequential, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInValidAddMixedNonSequential], errorMsg result:" + updatedSchema.isAddOnlyCompatible(originalSchema));
+        List<String> errorMessages = updatedSchema.isAddOnlyCompatible(originalSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInValidAddMixedNonSequential], errorMsg result:" + errorMessages);
+        assertNotEquals(0, errorMessages.size());
     }
 
     @Test
@@ -422,7 +438,9 @@ public class AddOnlySchemaCheckerTest {
         Map<String, String> dependencies = new HashMap<>();
         dependencies.put("common", commonSchemaString);
         ProtobufSchema schema = new ProtobufSchema(nonLocalSampleSchemaString, schemaReferenceList, dependencies, 1, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaString], errorMsg result:" + AddOnlySchemaChecker.sequentialSchemaInOrderCheck(schema));
+        List<String> errorMessages = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(schema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaString], errorMsg result:" + errorMessages);
+        assertEquals(0, errorMessages.size());
     }
     @Test
     public void testAddOnlyCheckNewInvalidSchemaMixedNonSequential() {
@@ -432,7 +450,9 @@ public class AddOnlySchemaCheckerTest {
         Map<String, String> dependencies = new HashMap<>();
         dependencies.put("common", commonSchemaString);
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringInValidAddMixedNonSequential, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInValidAddMixedNonSequential], errorMsg result:" + AddOnlySchemaChecker.sequentialSchemaInOrderCheck(updatedSchema));
+        List<String> errorMessages = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(updatedSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInValidAddMixedNonSequential], errorMsg result:" + errorMessages);
+        assertNotEquals(0, errorMessages.size());
     }
 
     @Test
@@ -443,6 +463,8 @@ public class AddOnlySchemaCheckerTest {
         Map<String, String> dependencies = new HashMap<>();
         dependencies.put("common", commonSchemaString);
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringInvalid2Msgs, schemaReferenceList, dependencies, 2, "nonLocalSample");
-        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInvalid2Msgs], errorMsg result:" + AddOnlySchemaChecker.sequentialSchemaInOrderCheck(updatedSchema));
+        List<String> errorMessages = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(updatedSchema);
+        System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInvalid2Msgs], errorMsg result:" + errorMessages);
+        assertNotEquals(0, errorMessages.size());
     }
 }

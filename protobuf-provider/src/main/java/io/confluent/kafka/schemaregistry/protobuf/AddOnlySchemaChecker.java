@@ -102,11 +102,12 @@ public class AddOnlySchemaChecker {
 
         Pair<MessageElement, Map<String, EnumElement>> parsedResult = parseMessageElements(typeElements);
 
-//        assert typeElements.size() == 1;
-        if (typeElements.size() > 1) {
-            errorMsg.add(String.format("More than 1 message defined in schema, for offline auto ETL, only 1 can be accepted. schema:\n%s\n", parsedSchema));
-            return errorMsg;
-        }
+        //TODO Only enable this when there's a dedicated ETL config UI page.
+        // only 1 msg per AutoETL schema, otherwise offline not able to convert to table.
+//        if (typeElements.size() > 1) {
+//            errorMsg.add(String.format("More than 1 message defined in schema, for offline auto ETL, only 1 can be accepted. schema:\n%s\n", parsedSchema));
+//            return errorMsg;
+//        }
         String msgName = typeElements.get(0).getName();
         ProtoType msgProtoType = ProtoType.get(msgName);
         checkMessageSequenceOrder(context, errorMsg, msgProtoType);
@@ -222,10 +223,11 @@ public class AddOnlySchemaChecker {
         Map<String, EnumElement> enums = new HashMap<>();
         for (TypeElement typeElement : types) {
             if (typeElement instanceof MessageElement) {
-                //only 1 msg per schema, otherwise offline not able to convert to table.
-                if(index >= 1) {
-                    throw new IllegalStateException(String.format("Seeing more than 1 msg in a schema, unable to trigger offline table creation:%s", types));
-                }
+                //TODO Only enable this when there's a dedicated ETL config UI page.
+                // only 1 msg per AutoETL schema, otherwise offline not able to convert to table.
+//                if(index >= 1) {
+//                    throw new IllegalStateException(String.format("Seeing more than 1 msg in a schema, unable to trigger offline table creation:%s", types));
+//                }
                 messageElement = (MessageElement) typeElement;
             } else if (typeElement instanceof EnumElement) {
                 EnumElement enumElement = (EnumElement) typeElement;

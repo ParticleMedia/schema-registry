@@ -177,4 +177,282 @@ public class TestUtils {
     return schemaString;
   }
 
+  public static String getProtobufCommonSchema() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message HistoryDoc {\n" +
+            "  string docid = 1;\n" +
+            "  string tag = 2;\n" +
+            "  int32 day = 3;\n" +
+            "  int32 test_column = 4;\n" +
+            "  int32 test_column2 = 5;\n" +
+            "}\n" +
+            "message UserPosPoi {\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.ChnWeightsEntry chn_weights = 1;\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.TpcmWeightsEntry tpcm_weights = 2;\n" +
+            "\n" +
+            "  message ChnWeightsEntry {\n" +
+            "    option map_entry = true;\n" +
+            "  \n" +
+            "    string key = 1;\n" +
+            "    double value = 2;\n" +
+            "  }" +
+            "  message TpcmWeightsEntry {\n" +
+            "    option map_entry = true;\n" +
+            "  \n" +
+            "    string key = 1;\n" +
+            "    double value = 2;\n" +
+            "  }\n" +
+            "}\n" +
+            "message PoiWeights {\n" +
+            "  double chn_weight = 1;\n" +
+            "  double tcat_weight = 2;\n" +
+            "  double tpcm_weight = 3;\n" +
+            "}\n" +
+            "enum OsType {\n" +
+            "  unknown = 0;\n" +
+            "  android = 1;\n" +
+            "  ios = 2;\n" +
+            "}\n" +
+            "enum GenderType {\n" +
+            "  gender_unknown = 0;\n" +
+            "  male = 1;\n" +
+            "  fema = 2;\n" +
+            "}\n";
+  }
+
+  public static String getProtobufCommonSchemaAddMsg() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message HistoryDoc {\n" +
+            "  string docid = 1;\n" +
+            "  string tag = 2;\n" +
+            "  int32 day = 3;\n" +
+            "  int32 test_column = 4;\n" +
+            "  int32 test_column2 = 5;\n" +
+            "}\n" +
+            "message UserPosPoi {\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.ChnWeightsEntry chn_weights = 1;\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.TpcmWeightsEntry tpcm_weights = 2;\n" +
+            "\n" +
+            "  message ChnWeightsEntry {\n" +
+            "    option map_entry = true;\n" +
+            "  \n" +
+            "    string key = 1;\n" +
+            "    double value = 2;\n" +
+            "  }" +
+            "  message TpcmWeightsEntry {\n" +
+            "    option map_entry = true;\n" +
+            "  \n" +
+            "    string key = 1;\n" +
+            "    double value = 2;\n" +
+            "  }\n" +
+            "}\n" +
+            "message PoiWeights {\n" +
+            "  double chn_weight = 1;\n" +
+            "  double tcat_weight = 2;\n" +
+            "  double tpcm_weight = 3;\n" +
+            "}\n" +
+            "enum OsType {\n" +
+            "  unknown = 0;\n" +
+            "  android = 1;\n" +
+            "  ios = 2;\n" +
+            "}\n" +
+            "enum GenderType {\n" +
+            "  gender_unknown = 0;\n" +
+            "  male = 1;\n" +
+            "  fema = 2;\n" +
+            "  trans = 3;\n" +
+            "}\n" +
+            "message NewMessageAdded1234 {\n" +
+            "  int32 int_feature = 1;\n" +
+            "  double double_feature = 2;\n" +
+            "  string string_feature = 3;\n" +
+            "}" +
+            "\n";
+  }
+
+  public static String getProtobufNonLocalSampleSchemaString() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message D2dNonlocalSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 8;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 9;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 10;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 11;\n" +
+            "  int64 pv_time = 12;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 13;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 14;\n" +
+            "  string src_docid = 15;\n" +
+            "  repeated string recent_click_docids = 16;\n" +
+            "}\n";
+  }
+
+  public static String getProtobufBloomSampleSchemaString() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message BloomEventSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 8;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 9;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 10;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 11;\n" +
+            "  int64 pv_time = 12;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 13;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 14;\n" +
+            "  string src_docid = 15;\n" +
+            "  repeated string recent_click_docids = 16;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc video_clicks = 17;\n" +
+            "}\n";
+  }
+
+  public static String getProtobufNonLocalSampleSchemaStringValidAddMixed1() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message D2dNonlocalSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 8;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 9;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 10;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 11;\n" +
+            "  int64 pv_time = 12;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 13;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 14;\n" +
+            "  string src_docid = 15;\n" +
+            "  repeated string recent_click_docids = 16;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc added_external_msg = 17;\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.TpcmWeightsEntry tpcm_weights = 18;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map = 19;\n" +
+            "  repeated string added_new_string = 20;\n" +
+            "  int64 added_new_int = 21;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map2 = 22;\n" +
+            "}\n";
+  }
+
+  public static String getProtobufNonLocalSampleSchemaStringInvalidAddMixed1() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message D2dNonlocalSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+
+            //Following are inserted in the middle
+            "  repeated .com.newsbreak.schema.HistoryDoc added_external_msg = 8;\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.TpcmWeightsEntry tpcm_weights = 9;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map = 10;\n" +
+            "  repeated string added_new_string = 11;\n" +
+            "  int64 added_new_int = 12;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map2 = 13;\n" +
+
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 14;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 15;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 16;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 17;\n" +
+            "  int64 pv_time = 18;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 19;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 20;\n" +
+            "  string src_docid = 21;\n" +
+            "  repeated string recent_click_docids = 22;\n" +
+            "}\n";
+
+  }
+
+  public static String getProtobufNonLocalSampleSchemaStringInValidAddMixedNonSequential() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message D2dNonlocalSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 8;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 9;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 10;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 11;\n" +
+            "  int64 pv_time = 12;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 13;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 14;\n" +
+            "  string src_docid = 15;\n" +
+            "  repeated string recent_click_docids = 16;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc added_external_msg = 20;\n" +
+            "  repeated .com.newsbreak.schema.UserPosPoi.TpcmWeightsEntry tpcm_weights = 21;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map = 30;\n" +
+            "  repeated string added_new_string = 31;\n" +
+            "  int64 added_new_int = 40;\n" +
+            "  map<string, .com.newsbreak.schema.HistoryDoc> added_msg_map2 = 100;\n" +
+            "}\n";
+  }
+
 }

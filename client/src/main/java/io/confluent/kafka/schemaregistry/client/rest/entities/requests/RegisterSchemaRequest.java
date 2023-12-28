@@ -44,6 +44,8 @@ public class RegisterSchemaRequest {
   //Following are additional information provided for internal management.
   private String business;
 
+  private boolean autoETLEnabled;
+
   public static RegisterSchemaRequest fromJson(String json) throws IOException {
     return JacksonMapper.INSTANCE.readValue(json, RegisterSchemaRequest.class);
   }
@@ -114,6 +116,16 @@ public class RegisterSchemaRequest {
     this.business = business;
   }
 
+  @JsonProperty("autoETLEnabled")
+  public boolean getAutoETLEnabled() {
+    return this.autoETLEnabled;
+  }
+
+  @JsonProperty("autoETLEnabled")
+  public void setAutoETLEnabled(Boolean autoETLEnabled) {
+    this.autoETLEnabled = autoETLEnabled;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -128,12 +140,13 @@ public class RegisterSchemaRequest {
         && Objects.equals(schemaType, that.schemaType)
         && Objects.equals(references, that.references)
         && Objects.equals(schema, that.schema)
-        && Objects.equals(business, that.business);
+        && Objects.equals(business, that.business)
+        && Objects.equals(autoETLEnabled, that.autoETLEnabled);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, references, version, id, schema, business);
+    return Objects.hash(schemaType, references, version, id, schema, business, autoETLEnabled);
   }
 
   @Override
@@ -149,6 +162,7 @@ public class RegisterSchemaRequest {
     buf.append("schemaType=").append(this.schemaType).append(",");
     buf.append("references=").append(this.references).append(",");
     buf.append("business=").append(this.business).append(",");
+    buf.append("autoETLEnabled=").append(this.autoETLEnabled).append(",");
     buf.append("schema=").append(schema).append("}");
     return buf.toString();
   }

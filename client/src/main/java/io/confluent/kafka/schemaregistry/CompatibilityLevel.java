@@ -52,7 +52,9 @@ public enum CompatibilityLevel {
       return FORWARD_TRANSITIVE;
     } else if (FULL_TRANSITIVE.name.equals(name)) {
       return FULL_TRANSITIVE;
-    } else {
+    } else if (ADDONLY.name.equals(name)) {
+      return ADDONLY;
+    }else {
       return null;
     }
   }

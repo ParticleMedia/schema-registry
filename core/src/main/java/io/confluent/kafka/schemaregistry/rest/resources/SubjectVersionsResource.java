@@ -16,10 +16,10 @@
 package io.confluent.kafka.schemaregistry.rest.resources;
 
 import com.google.common.base.CharMatcher;
+import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.rest.Versions;
-import io.confluent.kafka.schemaregistry.client.rest.entities.ErrorMessage;
-import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
+import io.confluent.kafka.schemaregistry.client.rest.entities.*;
 import io.confluent.kafka.schemaregistry.client.rest.entities.requests.RegisterSchemaRequest;
 import io.confluent.kafka.schemaregistry.client.rest.entities.requests.RegisterSchemaResponse;
 import io.confluent.kafka.schemaregistry.exceptions.IdDoesNotMatchException;
@@ -61,10 +61,8 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Path("/subjects/{subject}/versions")
 @Produces({Versions.SCHEMA_REGISTRY_V1_JSON_WEIGHTED,
@@ -78,6 +76,8 @@ public class SubjectVersionsResource {
   private static final Logger log = LoggerFactory.getLogger(SubjectVersionsResource.class);
 
   private static final String DEFAULT_BUSINESS_NAME = "default";
+
+  private static final boolean DEFAULT_AUTO_ETL_ENABLED = false;
 
   private final KafkaSchemaRegistry schemaRegistry;
 
@@ -230,6 +230,74 @@ public class SubjectVersionsResource {
   }
 
   @GET
+  @Path("/{version}/dependedby")
+  @Operation(summary = "List schemas and skip level schemas depending on a schema",
+          description = "Retrieves the IDs of schemas/skip level schemas that depending on the specified schema.",
+          responses = {
+                  @ApiResponse(responseCode = "200",
+                          description = "The list of schemas that depend on the specified schema",
+                          content = @Content(array = @ArraySchema(
+                                  schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = String.class)))),
+                  @ApiResponse(responseCode = "404", description = "Error code 40401 -- Subject not found\n"
+                          + "Error code 40402 -- Version not found"),
+                  @ApiResponse(responseCode = "422", description = "Error code 42202 -- Invalid version"),
+                  @ApiResponse(responseCode = "500",
+                          description = "Error code 50001 -- Error in the backend data store")
+          })
+  public List<String> getDependedBy(
+          @Parameter(description = "Name of the subject", required = true)
+          @PathParam("subject") String subject,
+          @Parameter(description = VERSION_PARAM_DESC, required = true)
+          @PathParam("version") String version) {
+
+    Schema schema = getSchemaByVersion(subject, version, true);
+    int schemaId = schema.getId();
+    if (schema == null) {
+      return new ArrayList<>();
+    }
+
+    //Perform a graph search logic to find all the schemas directly/indirectly depending on the target schema.
+    Map<Integer, String> dependentSchemaInfo = new HashMap<>();
+    Set<Integer> currentLayer = new HashSet<>();
+    currentLayer.add(schemaId);
+    dependedSchemaSearchHelper(dependentSchemaInfo, currentLayer);
+    dependentSchemaInfo.remove(schemaId);
+    return dependentSchemaInfo.values().stream().collect(Collectors.toList());
+  }
+
+  private void dependedSchemaSearchHelper(
+          Map<Integer, String> dependentSchemaInfo,
+          Set<Integer> currentLayer) {
+    if (currentLayer == null || currentLayer.size() == 0) return;
+    log.info("Running BFS search for dependency check, current layer:" + currentLayer);
+    SchemasResource schemasResource = new SchemasResource(this.schemaRegistry);
+    Set<Integer> nextLayer = new HashSet<>();
+    for(int id: currentLayer) {
+      List<SubjectVersion> subjectVersions = schemasResource.getVersions(id, null, false);
+
+      //Will return all the versions, find the max and propagate.
+      //UI enforces when imported, no way to choose previous version schemas.
+      //TODO check to see if UI enforces latest version.
+      int versionMax = -1;
+      String subject = null;
+      for(SubjectVersion subjectVersion : subjectVersions) {
+        String nextSubject = subjectVersion.getSubject();
+        int nextVersion = subjectVersion.getVersion();
+        if (nextVersion > versionMax) {
+          versionMax = nextVersion;
+          subject = nextSubject;
+        }
+      }
+      //After found the max, add current node to the result and then search for next layer.
+      dependentSchemaInfo.put(id, "(" + subject + ", versionMax:" + versionMax + ", id:" + id + ")");
+      List<Integer> nextSchemaIds = getReferencedBy(subject, String.valueOf(versionMax));
+      nextLayer.addAll(nextSchemaIds);
+    }
+    log.info("Running BFS search for dependency check, next layer:" + nextLayer);
+    dependedSchemaSearchHelper(dependentSchemaInfo, nextLayer);
+  }
+
+  @GET
   @PerformanceMetric("subjects.versions.list")
   @Operation(summary = "List versions under subject",
       description = "Retrieves a list of versions registered under the specified subject.",
@@ -320,10 +388,10 @@ public class SubjectVersionsResource {
       @QueryParam("normalize") boolean normalize,
       @Parameter(description = "Schema", required = true)
       @NotNull RegisterSchemaRequest request) {
-    log.info("Registering new schema: subject {}, version {}, id {}, type {}, schema size {}, business {}",
+    log.info("Registering new schema: subject {}, version {}, id {}, type {}, schema size {}, business {}, autoETLEnabled {}",
              subjectName, request.getVersion(), request.getId(), request.getSchemaType(),
             request.getSchema() == null ? 0 : request.getSchema().length(),
-            request.getBusiness());
+            request.getBusiness(), request.getAutoETLEnabled());
 
     if (subjectName != null && CharMatcher.javaIsoControl().matchesAnyOf(subjectName)) {
       throw Errors.invalidSubjectException(subjectName);
@@ -340,8 +408,21 @@ public class SubjectVersionsResource {
         request.getSchemaType() != null ? request.getSchemaType() : AvroSchema.TYPE,
         request.getReferences(),
         request.getSchema(),
-        request.getBusiness() == null ? DEFAULT_BUSINESS_NAME : request.getBusiness()
+        request.getBusiness() == null ? DEFAULT_BUSINESS_NAME : request.getBusiness(),
+        request.getAutoETLEnabled()
     );
+
+    //Can only reference schema under the same business.
+    for(SchemaReference schemaReference : schema.getReferences()) {
+      Schema referencedSchema = getSchemaByVersion(schemaReference.getSubject(),schemaReference.getVersion().toString(),false);
+      if (!referencedSchema.getBusiness().equals(schema.getBusiness())) {
+        throw Errors.operationNotPermittedException(String.format(
+                "Cannot reference to a schema that belongs to a different business. " +
+                        "Current business:%s, referenced business:%s, referenced schema:%s",
+                schema.getBusiness(), referencedSchema.getBusiness(), referencedSchema.getSchema()));
+      }
+    }
+
     int id;
     try {
       id = schemaRegistry.registerOrForward(subjectName, schema, normalize, headerProperties);

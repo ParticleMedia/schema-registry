@@ -1524,7 +1524,7 @@ public class ProtobufSchema implements ParsedSchema {
 
   @Override
   public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
-    log.info("Running addonly schema compatibitity checks for Protobuf.");
+    log.info("Running addonly schema compatibility checks for Protobuf.");
     if (!schemaType().equals(previousSchema.schemaType())) {
       return Collections.singletonList("Incompatible because of different schema type");
     }
@@ -1554,6 +1554,19 @@ public class ProtobufSchema implements ParsedSchema {
     }
 
     return AddOnlySchemaChecker.checkCompatibility(previousSchema, this);
+  }
+
+  //This function is used to check how many messages are stored in a schema. For AutoETL purpose, top level
+  //schema can only have 1 message. Otherwise, offline tasks will not be able to identify target data.
+  public int getMessageCount() {
+    List<TypeElement> typeElements =     this.rawSchema().getTypes();
+    int counter = 0;
+    for (TypeElement typeElement : typeElements) {
+      if (typeElement instanceof MessageElement) {
+        counter++;
+      }
+    }
+    return counter;
   }
 
   @Override
