@@ -493,6 +493,17 @@ public class RestService implements Configurable {
     return registerSchema(request, subject, normalize);
   }
 
+  public int registerSchema(String schemaString, String schemaType,
+                            List<SchemaReference> references, String subject, boolean normalize, boolean autoETLEnabled)
+          throws IOException, RestClientException {
+    RegisterSchemaRequest request = new RegisterSchemaRequest();
+    request.setSchema(schemaString);
+    request.setSchemaType(schemaType);
+    request.setReferences(references);
+    request.setAutoETLEnabled(autoETLEnabled);
+    return registerSchema(request, subject, normalize);
+  }
+
   // Visible for testing
   public int registerSchema(String schemaString, String subject, int version, int id)
       throws IOException, RestClientException {

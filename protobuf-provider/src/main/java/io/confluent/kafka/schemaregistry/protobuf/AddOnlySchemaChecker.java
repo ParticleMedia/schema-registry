@@ -100,37 +100,9 @@ public class AddOnlySchemaChecker {
         Context context = new Context();
         context.collectTypeInfo(protobufSchema, true);
 
-        Pair<MessageElement, Map<String, EnumElement>> parsedResult = parseMessageElements(typeElements);
-
-        //TODO Only enable this when there's a dedicated ETL config UI page.
-        // only 1 msg per AutoETL schema, otherwise offline not able to convert to table.
-//        if (typeElements.size() > 1) {
-//            errorMsg.add(String.format("More than 1 message defined in schema, for offline auto ETL, only 1 can be accepted. schema:\n%s\n", parsedSchema));
-//            return errorMsg;
-//        }
         String msgName = typeElements.get(0).getName();
         ProtoType msgProtoType = ProtoType.get(msgName);
         checkMessageSequenceOrder(context, errorMsg, msgProtoType);
-
-//        List<FieldElement> fieldElements = parsedResult.first.getFields();
-//        for(FieldElement fieldElement: fieldElements) {
-//            String fieldTypeName = fieldElement.getType();
-//            ProtoType protoType = ProtoType.get(fieldTypeName);
-//            Type type = type(context, protoType, true);
-//            switch (type) {
-//                case SCALAR:
-//                    log.info(String.format("No need to compare sequence for simple scalar type:%s", protoType));
-//                    break;
-//                case MESSAGE:
-//                    checkMessageSequenceOrder(context, errorMsg, protoType);
-//                    break;
-//                case MAP:
-//                    checkMapSequenceOrder(context, errorMsg, protoType);
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
 
         return errorMsg;
     }
@@ -152,7 +124,8 @@ public class AddOnlySchemaChecker {
 
         for(int i = 1; i <= fieldOrderSequence.size(); i++) {
             if (fieldOrderSequence.get(i-1).first != i) {
-                errorMsg.add(String.format("Schema is not in sequential increasing order, field:%s in schema:%s\n", fieldOrderSequence.get(i-1).second, messageElement));
+                errorMsg.add(String.format("Schema is not in sequential increasing order, field:%s in schema:%s", fieldOrderSequence.get(i-1).second, messageElement));
+                errorMsg.add("\n");
             }
             FieldElement fieldElement = fieldOrderSequence.get(i-1).second;
             String fieldType = fieldElement.getType();
@@ -179,20 +152,24 @@ public class AddOnlySchemaChecker {
                                               List<String> errorMsg,
                                               ProtoType mapProtoType) {
         log.info(String.format("Running checkMapSequenceOrder for schema:%s", mapProtoType));
-        ProtoType valueType = mapProtoType.getValueType();
-        Type type = type(context, valueType, true);
-        switch (type) {
-            case SCALAR:
-                log.info(String.format("No need to compare sequence for simple scalar type:%s", valueType));
-                break;
-            case MESSAGE:
-                checkMessageSequenceOrder(context, errorMsg, valueType);
-                break;
-            case MAP:
-                checkMapSequenceOrder(context, errorMsg, valueType);
-                break;
-            default:
-                break;
+        if (mapProtoType != null) {
+            ProtoType valueType = mapProtoType.getValueType();
+            if (valueType != null) {
+                Type type = type(context, valueType, true);
+                switch (type) {
+                    case SCALAR:
+                        log.info(String.format("No need to compare sequence for simple scalar type:%s", valueType));
+                        break;
+                    case MESSAGE:
+                        checkMessageSequenceOrder(context, errorMsg, valueType);
+                        break;
+                    case MAP:
+                        checkMapSequenceOrder(context, errorMsg, valueType);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 

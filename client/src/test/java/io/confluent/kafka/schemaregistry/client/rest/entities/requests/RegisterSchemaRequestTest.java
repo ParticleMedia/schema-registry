@@ -28,8 +28,8 @@ public class RegisterSchemaRequestTest {
     request.setSchema("string");
     request.setId(100);
     request.setVersion(10);
-
-    assertEquals("{\"version\":10,\"id\":100,\"schema\":\"string\"}", request.toJson());
+System.out.println(request.toJson());
+    assertEquals("{\"version\":10,\"id\":100,\"schema\":\"string\",\"autoETLEnabled\":false}", request.toJson());
   }
 
   @Test
@@ -39,7 +39,7 @@ public class RegisterSchemaRequestTest {
     request.setSchema("string");
     request.setVersion(10);
 
-    assertEquals("{\"version\":10,\"schema\":\"string\"}", request.toJson());
+    assertEquals("{\"version\":10,\"schema\":\"string\",\"autoETLEnabled\":false}", request.toJson());
   }
 
   @Test
@@ -49,7 +49,7 @@ public class RegisterSchemaRequestTest {
     request.setSchema("string");
     request.setId(100);
 
-    assertEquals("{\"id\":100,\"schema\":\"string\"}", request.toJson());
+    assertEquals("{\"id\":100,\"schema\":\"string\",\"autoETLEnabled\":false}", request.toJson());
   }
 
   @Test
@@ -58,7 +58,7 @@ public class RegisterSchemaRequestTest {
     RegisterSchemaRequest request = new RegisterSchemaRequest();
     request.setSchema("string");
 
-    assertEquals("{\"schema\":\"string\"}", request.toJson());
+    assertEquals("{\"schema\":\"string\",\"autoETLEnabled\":false}", request.toJson());
   }
 
   @Test
@@ -69,6 +69,6 @@ public class RegisterSchemaRequestTest {
     request.setSchemaType("AVRO");
 
     // Note that schemaType is omitted
-    assertEquals("{\"schema\":\"string\"}", request.toJson());
+    assertEquals("{\"schema\":\"string\",\"autoETLEnabled\":false}", request.toJson());
   }
 }

@@ -456,15 +456,17 @@ public class AddOnlySchemaCheckerTest {
     }
 
     @Test
-    public void testAddOnlyCheckNewInvalidSchema2Msgs() {
+    //PB schema level does not enforce 1 schema 1 message logic. Enforced at CompatibilityResource Level.
+    public void testAddOnlyCheckNewValidSchema2Msgs() {
         SchemaReference schemaReference = new SchemaReference("common","commonSchemaSubject", 1);
         List<SchemaReference> schemaReferenceList = new LinkedList<>();
         schemaReferenceList.add(schemaReference);
         Map<String, String> dependencies = new HashMap<>();
         dependencies.put("common", commonSchemaString);
         ProtobufSchema updatedSchema = new ProtobufSchema(nonLocalSampleSchemaStringInvalid2Msgs, schemaReferenceList, dependencies, 2, "nonLocalSample");
+
         List<String> errorMessages = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(updatedSchema);
         System.out.println("AddOnly schema check result for [nonLocalSampleSchemaStringInvalid2Msgs], errorMsg result:" + errorMessages);
-        assertNotEquals(0, errorMessages.size());
+        assertEquals(0, errorMessages.size());
     }
 }

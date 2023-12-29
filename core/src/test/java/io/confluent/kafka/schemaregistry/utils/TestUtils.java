@@ -312,6 +312,42 @@ public class TestUtils {
             "}\n";
   }
 
+  public static String getProtobufNonLocalSample2MessagesSchemaString() {
+    return "syntax = \"proto3\";\n" +
+            "package com.newsbreak.schema;\n" +
+            "\n" +
+            "import \"common.proto\";\n" +
+            "\n" +
+            "option java_package = \"com.newsbreak.schema.feature\";\n" +
+            "option java_multiple_files = true;\n" +
+            "option go_package = \"newsbreak.com/schema/feature\";\n" +
+            "\n" +
+            "message D2dNonlocalSample {\n" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "  int64 ts = 4;\n" +
+            "  .com.newsbreak.schema.OsType os = 5;\n" +
+            "  repeated string recent_like = 6;\n" +
+            "  repeated string recent_share = 7;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks = 8;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks = 9;\n" +
+            "  .com.newsbreak.schema.GenderType gender = 10;\n" +
+            "  .com.newsbreak.schema.UserPosPoi user_pos_poi = 11;\n" +
+            "  int64 pv_time = 12;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc long_clicks_idx100 = 13;\n" +
+            "  repeated .com.newsbreak.schema.HistoryDoc ann_long_clicks_idx100 = 14;\n" +
+            "  string src_docid = 15;\n" +
+            "  repeated string recent_click_docids = 16;\n" +
+            "}" +
+            "message AnotherD2dNonlocalSample {" +
+            "  int32 label = 1;\n" +
+            "  string impid = 2;\n" +
+            "  int64 userid = 3;\n" +
+            "}\n";
+  }
+
+
   public static String getProtobufBloomSampleSchemaString() {
     return "syntax = \"proto3\";\n" +
             "package com.newsbreak.schema;\n" +

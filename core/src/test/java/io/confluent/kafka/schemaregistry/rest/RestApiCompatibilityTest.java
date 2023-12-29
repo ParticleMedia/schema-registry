@@ -304,7 +304,7 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
               e.getStatus());
     }
 
-    // register schema that is not addonly compatible with schemaString1
+    // register schema that is not addonly compatible with out of order schema
     String nonLocalSampleSchemaStringInValidAddMixedNonSequential = TestUtils.getProtobufNonLocalSampleSchemaStringInValidAddMixedNonSequential();
     try {
       restApp.restClient.registerSchema(nonLocalSampleSchemaStringInValidAddMixedNonSequential, "PROTOBUF",
@@ -314,6 +314,19 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
       // this is expected.
       assertEquals("Should get a conflict status",
               RestIncompatibleSchemaException.DEFAULT_ERROR_CODE,
+              e.getStatus());
+    }
+
+    // register schema that contains 2 msgs which is not valid AutoETLEnabled setting.
+    String nonLocalSampleSchema2MessagesString = TestUtils.getProtobufNonLocalSample2MessagesSchemaString();
+    try {
+      restApp.restClient.registerSchema(nonLocalSampleSchema2MessagesString, "PROTOBUF",
+              schemaReferenceList,subject, true, true);
+      fail("Registering a not addonly compatible schema should fail");
+    } catch (RestClientException e) {
+      // this is expected.
+      assertEquals("Should get a conflict status",
+              422,
               e.getStatus());
     }
   }
@@ -417,4 +430,6 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
             restApp.restClient.registerSchema(commonSchemaWithNewMessage, "PROTOBUF",
                     null, "commonSubject", true));
   }
+
+
 }

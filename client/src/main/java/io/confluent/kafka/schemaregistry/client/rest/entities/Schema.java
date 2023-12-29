@@ -179,7 +179,7 @@ public class Schema implements Comparable<Schema> {
   }
 
   @JsonProperty("autoETLEnabled")
-  public void setAutoETLEnabled(Boolean business) {
+  public void setAutoETLEnabled(Boolean autoETLEnabled) {
     this.autoETLEnabled = autoETLEnabled;
   }
 
