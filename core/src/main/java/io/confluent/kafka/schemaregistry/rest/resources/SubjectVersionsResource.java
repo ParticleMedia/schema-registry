@@ -77,7 +77,7 @@ public class SubjectVersionsResource {
 
   private static final String DEFAULT_BUSINESS_NAME = "default";
 
-  private static final boolean DEFAULT_AUTO_ETL_ENABLED = false;
+  private static final Boolean DEFAULT_AUTO_ETL_ENABLED = false;
 
   private final KafkaSchemaRegistry schemaRegistry;
 
@@ -409,7 +409,7 @@ public class SubjectVersionsResource {
         request.getReferences(),
         request.getSchema(),
         request.getBusiness() == null ? DEFAULT_BUSINESS_NAME : request.getBusiness(),
-        request.getAutoETLEnabled()
+        request.getAutoETLEnabled() == null? DEFAULT_AUTO_ETL_ENABLED : request.getAutoETLEnabled()
     );
 
     //Can only reference schema under the same business.
@@ -422,6 +422,7 @@ public class SubjectVersionsResource {
                 schema.getBusiness(), referencedSchema.getBusiness(), referencedSchema.getSchema()));
       }
     }
+
 
     int id;
     try {
@@ -451,9 +452,77 @@ public class SubjectVersionsResource {
     } catch (SchemaRegistryException e) {
       throw Errors.schemaRegistryException("Error while registering schema", e);
     }
+
+    //if there are schemas depending on this, re-register these schemas.
+    Map<String, Integer> updateInfo = new HashMap<>();
+    recursiveRegisterHelper(updateInfo, schema.getSubject(), normalize, headerProperties);
+    log.info(String.format("Updated depended schemas:%s",updateInfo));
+
     RegisterSchemaResponse registerSchemaResponse = new RegisterSchemaResponse();
     registerSchemaResponse.setId(id);
     asyncResponse.resume(registerSchemaResponse);
+  }
+
+  private void recursiveRegisterHelper(Map<String, Integer> updateInfo,
+                                       String subject,
+                                       boolean normalize,
+                                       Map<String, String> headerProperties) {
+    SchemasResource schemasResource = new SchemasResource(this.schemaRegistry);
+    List<Integer> versions = listVersions(subject, true);
+    int versionMax = versions.stream().mapToInt(v -> v).max().getAsInt();
+    Set<Integer> dependingIds = new HashSet<>();
+    //Find all the dependencies by all the versions
+    for(int version: versions) {
+      List<Integer> schemaIds = getReferencedBy(subject, String.valueOf(version));
+      dependingIds.addAll(schemaIds);
+    }
+    if (dependingIds == null || dependingIds.size() == 0) {
+      log.info(String.format("No schema depending on this sub-schema %s, skip.",subject));
+    } else {
+      for(int dependingId: dependingIds) {
+        Set<String> subjectNames = schemasResource.getSubjects(dependingId, null, false);
+        for(String subjectName : subjectNames) {
+          log.info("Processing upper level depending schema:{}", subjectName);
+          List<Integer> dependingSchemaVersions = listVersions(subjectName, false);
+          int dependingVersionMax = dependingSchemaVersions.stream().mapToInt(v -> v).max().getAsInt();
+          Schema dependingSchema = getSchemaByVersion(subjectName, String.valueOf(dependingVersionMax), false);
+          //Set the schema to depend on the updated version.
+          List<SchemaReference> schemaReferences = new LinkedList<>();
+          for(SchemaReference schemaReference : dependingSchema.getReferences()) {
+            if(schemaReference.getSubject().equals(subject)) {
+              log.info(String.format("Found schemaReference that matches the updated under-level schema, will update: %s with versionMax %d", schemaReference, versionMax));
+              schemaReference.setVersion(versionMax);
+            }
+            schemaReferences.add(schemaReference);
+          }
+          try {
+            // Re-register schema recursively
+//            io.confluent.kafka.schemaregistry.storage.Mode mode = schemaRegistry.getModeInScope(dependingSchema.getSubject());
+//            log.info(String.format("******* Mode : %s", mode));
+//            schemaRegistry.setMode(dependingSchema.getSubject(), io.confluent.kafka.schemaregistry.storage.Mode.IMPORT);
+//            mode = schemaRegistry.getModeInScope(dependingSchema.getSubject());
+//            log.info(String.format("******* After update, Mode : %s", mode));
+
+            Schema newSchema = new Schema(
+                    subjectName,
+                    0,
+                     -1,
+                    dependingSchema.getSchemaType(),
+                    schemaReferences,
+                    dependingSchema.getSchema(),
+                    dependingSchema.getBusiness() == null ? DEFAULT_BUSINESS_NAME : dependingSchema.getBusiness(),
+                    dependingSchema.getAutoETLEnabled() == null? DEFAULT_AUTO_ETL_ENABLED : dependingSchema.getAutoETLEnabled()
+            );
+            int id = schemaRegistry.registerOrForward(newSchema.getSubject(), newSchema, normalize, headerProperties);
+            log.info(String.format("Register depending schema {} again, returned id {}", dependingSchema, id));
+            updateInfo.put(dependingSchema.getSubject(), id);
+          } catch (SchemaRegistryException se) {
+            log.error("Unable to update upper level schema.", se);
+            throw Errors.schemaRegistryException("Error while registering schema", se);
+          }
+        }
+      }
+    }
   }
 
   @DELETE

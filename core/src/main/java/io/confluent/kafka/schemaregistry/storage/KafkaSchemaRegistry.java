@@ -53,6 +53,7 @@ import io.confluent.kafka.schemaregistry.id.IncrementalIdGenerator;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.leaderelector.kafka.KafkaGroupLeaderElector;
 import io.confluent.kafka.schemaregistry.metrics.MetricsContainer;
+import io.confluent.kafka.schemaregistry.protobuf.AddOnlySchemaChecker;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
@@ -490,6 +491,16 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
 
       final boolean isCompatible =
               isCompatibleWithPrevious(subject, parsedSchema, undeletedVersions).isEmpty();
+      boolean isAddOnlyCompatible = true;
+      //TODO When registering new schema, there's no previous schema for check. For addOnly type, need to
+      // run additional checks to make sure they are compatible.
+      // TODO now only do this check for initial run PB schema. Need to 1) run for all 2) Remove check and move it here.
+      if (schema.getSchemaType().equals("PROTOBUF") && undeletedVersions.isEmpty()) {
+        log.info("Detected PB new addonly schema registration event. Will run sequential checker.");
+        List<String> sequentialSchemaInOrderCheckErrMsgs = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(parsedSchema);
+        isAddOnlyCompatible = sequentialSchemaInOrderCheckErrMsgs.isEmpty();
+      }
+
       if (normalize) {
         parsedSchema = parsedSchema.normalize();
       }
@@ -497,7 +508,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
       schema.setSchema(parsedSchema.canonicalString());
       schema.setReferences(parsedSchema.references());
 
-      if (isCompatible) {
+      if (isCompatible && isAddOnlyCompatible) {
         // save the context key
         QualifiedSubject qs = QualifiedSubject.create(tenant(), subject);
         if (qs != null && !DEFAULT_CONTEXT.equals(qs.getContext())) {

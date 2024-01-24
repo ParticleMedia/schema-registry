@@ -17,6 +17,7 @@ package io.confluent.kafka.schemaregistry.rest;
 import io.confluent.kafka.schemaregistry.ClusterTestHarness;
 import io.confluent.kafka.schemaregistry.CompatibilityLevel;
 import io.confluent.kafka.schemaregistry.avro.AvroUtils;
+import io.confluent.kafka.schemaregistry.client.rest.entities.Schema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import io.confluent.kafka.schemaregistry.rest.exceptions.RestIncompatibleSchemaException;
@@ -221,12 +222,12 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     String commonSchemaStr = TestUtils.getProtobufCommonSchema();
     assertEquals("Registering should succeed",
             1,
-            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "commonSubject"));
+            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "common.proto"));
 
     String subject = "nonLocalSampleSubject";
     String nonLocalSampleSchemaString = TestUtils.getProtobufNonLocalSampleSchemaString();
     List<SchemaReference> schemaReferenceList = new LinkedList<>();
-    SchemaReference schemaReference = new SchemaReference("common.proto", "commonSubject", 1);
+    SchemaReference schemaReference = new SchemaReference("common.proto", "common.proto", 1);
     schemaReferenceList.add(schemaReference);
     assertEquals("Registering should succeed",
             2,
@@ -263,12 +264,12 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     String commonSchemaStr = TestUtils.getProtobufCommonSchema();
     assertEquals("Registering should succeed",
             1,
-            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null,"commonSubject"));
+            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null,"common.proto"));
 
     String subject = "nonLocalSampleSubject";
     String nonLocalSampleSchemaString = TestUtils.getProtobufNonLocalSampleSchemaString();
     List<SchemaReference> schemaReferenceList = new LinkedList<>();
-    SchemaReference schemaReference = new SchemaReference("common.proto", "commonSubject", 1);
+    SchemaReference schemaReference = new SchemaReference("common.proto", "common.proto", 1);
     schemaReferenceList.add(schemaReference);
     assertEquals("Registering should succeed",
             2,
@@ -321,8 +322,8 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     String nonLocalSampleSchema2MessagesString = TestUtils.getProtobufNonLocalSample2MessagesSchemaString();
     try {
       restApp.restClient.registerSchema(nonLocalSampleSchema2MessagesString, "PROTOBUF",
-              schemaReferenceList,subject, true, true);
-      fail("Registering a not addonly compatible schema should fail");
+              schemaReferenceList, "NonLocalSchemaWith2Msgs", true, true);
+      fail("Registering addonly compatible schema with 2 msgs should fail");
     } catch (RestClientException e) {
       // this is expected.
       assertEquals("Should get a conflict status",
@@ -332,16 +333,78 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
   }
 
   @Test
+  public void testRegisterProtobufAddOnlySchemaFail2() throws Exception {
+    // verify that default compatibility level is backward
+    assertEquals("Default compatibility level should be backward",
+            CompatibilityLevel.BACKWARD.name,
+            restApp.restClient.getConfig(null).getCompatibilityLevel());
+    // change it to addonly
+    assertEquals("Changing compatibility level should succeed",
+            CompatibilityLevel.ADDONLY.name,
+            restApp.restClient
+                    .updateCompatibility(CompatibilityLevel.ADDONLY.name, null)
+                    .getCompatibilityLevel());
+
+    // verify that new compatibility level is addonly
+    assertEquals("New compatibility level should be addonly",
+            CompatibilityLevel.ADDONLY.name,
+            restApp.restClient.getConfig(null).getCompatibilityLevel());
+
+    //First register common schema which will be referenced later.
+    String commonSchemaStr = TestUtils.getProtobufCommonSchema();
+    assertEquals("Registering should succeed",
+            1,
+            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null,"common.proto"));
+
+//    String subject = "nonLocalSampleSubject";
+    String nonLocalSampleSchemaString = TestUtils.getProtobufNonLocalSampleSchemaString();
+    List<SchemaReference> schemaReferenceList = new LinkedList<>();
+    SchemaReference schemaReference = new SchemaReference("common.proto", "common.proto", 1);
+    schemaReferenceList.add(schemaReference);
+    assertEquals("Registering should succeed",
+            2,
+            restApp.restClient.registerSchema(nonLocalSampleSchemaString, "PROTOBUF",
+                    schemaReferenceList, "nonLocalSampleSubject", true));
+
+    // register schema that is not addonly compatible with schemaString1
+    String nonLocalSampleSchemaStringInvalidAddMixed1 = TestUtils.getProtobufNonLocalSampleSchemaStringInvalidAddMixed1();
+    try {
+      restApp.restClient.registerSchema(nonLocalSampleSchemaStringInvalidAddMixed1, "PROTOBUF",
+              schemaReferenceList, "nonLocalSampleSubject", true);
+      fail("Registering a not addonly compatible schema should fail");
+    } catch (RestClientException e) {
+      // this is expected.
+      assertEquals("Should get a conflict status",
+              RestIncompatibleSchemaException.DEFAULT_ERROR_CODE,
+              e.getStatus());
+    }
+
+    // register a new schema that is not addonly compatible with out of order schema
+    String nonLocalSampleSchemaStringInValidAddMixedNonSequential = TestUtils.getProtobufNonLocalSampleSchemaStringInValidAddMixedNonSequential();
+    try {
+      restApp.restClient.registerSchema(nonLocalSampleSchemaStringInValidAddMixedNonSequential, "PROTOBUF",
+              schemaReferenceList,"nonLocalSampleSubject2", true);
+      fail("Registering a not addonly compatible schema should fail");
+    } catch (RestClientException e) {
+      // this is expected.
+      assertEquals("Should get a conflict status",
+              RestIncompatibleSchemaException.DEFAULT_ERROR_CODE,
+              e.getStatus());
+    }
+
+  }
+
+  @Test
   public void testUpgradeProtobufCommonSchema() throws Exception {
     //First register common schema which will be referenced later.
     String commonSchemaStr = TestUtils.getProtobufCommonSchema();
     assertEquals("Registering should succeed",
             1,
-            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "commonSubject"));
+            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "common.proto"));
 
     String nonLocalSampleSchemaString = TestUtils.getProtobufNonLocalSampleSchemaString();
     List<SchemaReference> schemaReferenceList = new LinkedList<>();
-    SchemaReference schemaReference = new SchemaReference("common.proto", "commonSubject", 1);
+    SchemaReference schemaReference = new SchemaReference("common.proto", "common.proto", 1);
     schemaReferenceList.add(schemaReference);
     assertEquals("Registering should succeed",
             2,
@@ -361,7 +424,7 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
             restApp.restClient.getConfig(null).getCompatibilityLevel());
 
     //Now get dependencies of common schema, it should tell that there's a downstream dependency affect.
-    List<String> dependentSchemaIdList = restApp.restClient.getDependedBy("commonSubject", 1);
+    List<String> dependentSchemaIdList = restApp.restClient.getDependedBy("common.proto", 1);
     System.out.println("Dependency check result:" + dependentSchemaIdList);
     assertEquals("Registering should succeed",
             1,
@@ -374,7 +437,7 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     assertEquals("Registering should succeed",
             3,
             restApp.restClient.registerSchema(commonSchemaWithNewMessage, "PROTOBUF",
-                    null, "commonSubject", true));
+                    null, "common.proto", true));
   }
 
   @Test
@@ -383,12 +446,12 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     String commonSchemaStr = TestUtils.getProtobufCommonSchema();
     assertEquals("Registering should succeed",
             1,
-            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "commonSubject"));
+            restApp.restClient.registerSchema(commonSchemaStr, "PROTOBUF", null, "common.proto"));
 
     //Register the first downstream schema
     String nonLocalSampleSchemaString = TestUtils.getProtobufNonLocalSampleSchemaString();
     List<SchemaReference> schemaReferenceList = new LinkedList<>();
-    SchemaReference schemaReference = new SchemaReference("common.proto", "commonSubject", 1);
+    SchemaReference schemaReference = new SchemaReference("common.proto", "common.proto", 1);
     schemaReferenceList.add(schemaReference);
     assertEquals("Registering should succeed",
             2,
@@ -415,7 +478,7 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
             restApp.restClient.getConfig(null).getCompatibilityLevel());
 
     //Now get dependencies of common schema, it should tell that there's a downstream dependency affect.
-    List<String> dependentSchemaIdList = restApp.restClient.getDependedBy("commonSubject", 1);
+    List<String> dependentSchemaIdList = restApp.restClient.getDependedBy("common.proto", 1);
     System.out.println("Dependency check result:" + dependentSchemaIdList);
     assertEquals("Registering should succeed",
             2,
@@ -428,7 +491,19 @@ public class RestApiCompatibilityTest extends ClusterTestHarness {
     assertEquals("Registering should succeed",
             4,
             restApp.restClient.registerSchema(commonSchemaWithNewMessage, "PROTOBUF",
-                    null, "commonSubject", true));
+                    null, "common.proto", true));
+
+    //Now check the version and corresponding information for depending schemas
+    List<Integer> nonLocalVersions = restApp.restClient.getAllVersions("nonLocalSampleSubject");
+    assertEquals(2, nonLocalVersions.size());
+    List<Schema> latestNonLocalSchema = restApp.restClient.getSchemas("nonLocalSampleSubject", false, true);
+    assertEquals(1, latestNonLocalSchema.size());
+    assertEquals(2, latestNonLocalSchema.get(0).getReferences().get(0).getVersion().intValue());
+    List<Integer> bloomVersions = restApp.restClient.getAllVersions("bloomSampleSubject");
+    assertEquals(2, bloomVersions.size());
+    List<Schema> latestBloomSchema = restApp.restClient.getSchemas("bloomSampleSubject", false, true);
+    assertEquals(1, latestBloomSchema.size());
+    assertEquals(2, latestBloomSchema.get(0).getReferences().get(0).getVersion().intValue());
   }
 
 

@@ -41,7 +41,7 @@ public class Schema implements Comparable<Schema> {
 
   private static final String DEFAULT_BUSINESS = "default";
 
-  private static final boolean DEFAULT_AUTO_ETL_ENABLED = false;
+  private static final Boolean DEFAULT_AUTO_ETL_ENABLED = false;
 
   private String subject;
   private Integer version;
@@ -53,7 +53,7 @@ public class Schema implements Comparable<Schema> {
   //Following are additional information provided for internal management.
   private String business;
 
-  private boolean autoETLEnabled;
+  private Boolean autoETLEnabled;
 
 //  @JsonCreator
   public Schema(@JsonProperty("subject") String subject,
@@ -174,7 +174,7 @@ public class Schema implements Comparable<Schema> {
   }
 
   @JsonProperty("autoETLEnabled")
-  public boolean getAutoETLEnabled() {
+  public Boolean getAutoETLEnabled() {
     return this.autoETLEnabled;
   }
 

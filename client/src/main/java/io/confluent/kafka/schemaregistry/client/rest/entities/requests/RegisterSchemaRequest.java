@@ -44,7 +44,7 @@ public class RegisterSchemaRequest {
   //Following are additional information provided for internal management.
   private String business;
 
-  private boolean autoETLEnabled;
+  private Boolean autoETLEnabled;
 
   public static RegisterSchemaRequest fromJson(String json) throws IOException {
     return JacksonMapper.INSTANCE.readValue(json, RegisterSchemaRequest.class);
@@ -117,7 +117,7 @@ public class RegisterSchemaRequest {
   }
 
   @JsonProperty("autoETLEnabled")
-  public boolean getAutoETLEnabled() {
+  public Boolean getAutoETLEnabled() {
     return this.autoETLEnabled;
   }
 
