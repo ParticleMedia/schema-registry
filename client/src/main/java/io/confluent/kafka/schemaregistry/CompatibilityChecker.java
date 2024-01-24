@@ -31,7 +31,7 @@ public class CompatibilityChecker {
 
   // Check if data produced by the new schema can be read by the previous schema
   private static final SchemaValidator FORWARD_VALIDATOR =
-      new SchemaValidatorBuilder().addOnlyStrategy()
+      new SchemaValidatorBuilder().canBeReadStrategy()
       .validateLatest();
   public static final CompatibilityChecker FORWARD_CHECKER = new CompatibilityChecker(
       FORWARD_VALIDATOR);

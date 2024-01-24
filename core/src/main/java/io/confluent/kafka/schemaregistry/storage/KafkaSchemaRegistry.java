@@ -53,6 +53,8 @@ import io.confluent.kafka.schemaregistry.id.IncrementalIdGenerator;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.leaderelector.kafka.KafkaGroupLeaderElector;
 import io.confluent.kafka.schemaregistry.metrics.MetricsContainer;
+import io.confluent.kafka.schemaregistry.protobuf.AddOnlySchemaChecker;
+import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
 import io.confluent.kafka.schemaregistry.rest.SchemaRegistryConfig;
 import io.confluent.kafka.schemaregistry.rest.VersionId;
@@ -489,6 +491,16 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
 
       final boolean isCompatible =
               isCompatibleWithPrevious(subject, parsedSchema, undeletedVersions).isEmpty();
+      boolean isAddOnlyCompatible = true;
+      //TODO When registering new schema, there's no previous schema for check. For addOnly type, need to
+      // run additional checks to make sure they are compatible.
+      // TODO now only do this check for initial run PB schema. Need to 1) run for all 2) Remove check and move it here.
+      if (schema.getSchemaType().equals("PROTOBUF") && undeletedVersions.isEmpty()) {
+        log.info("Detected PB new addonly schema registration event. Will run sequential checker.");
+        List<String> sequentialSchemaInOrderCheckErrMsgs = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(parsedSchema);
+        isAddOnlyCompatible = sequentialSchemaInOrderCheckErrMsgs.isEmpty();
+      }
+
       if (normalize) {
         parsedSchema = parsedSchema.normalize();
       }
@@ -496,7 +508,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
       schema.setSchema(parsedSchema.canonicalString());
       schema.setReferences(parsedSchema.references());
 
-      if (isCompatible) {
+      if (isCompatible && isAddOnlyCompatible) {
         // save the context key
         QualifiedSubject qs = QualifiedSubject.create(tenant(), subject);
         if (qs != null && !DEFAULT_CONTEXT.equals(qs.getContext())) {
@@ -786,7 +798,9 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
             schema.getId(),
             schema.getSchemaType(),
             schema.getReferences(),
-            schema.getSchema()
+            schema.getSchema(),
+            schema.getBusiness(),
+            schema.getAutoETLEnabled()
         );
         matchingSchema = lookUpSchemaUnderSubject(
             qualSub.toQualifiedSubject(), qualSchema, normalize, lookupDeletedSchema);
@@ -817,7 +831,9 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
                                              schemaIdAndSubjects.getSchemaId(),
                                              schema.getSchemaType(),
                                              schema.getReferences(),
-                                             schema.getSchema());
+                                             schema.getSchema(),
+                                             schema.getBusiness(),
+                                             schema.getAutoETLEnabled());
           return matchingSchema;
         }
       }
@@ -871,6 +887,8 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
     registerSchemaRequest.setReferences(schema.getReferences());
     registerSchemaRequest.setVersion(schema.getVersion());
     registerSchemaRequest.setId(schema.getId());
+    registerSchemaRequest.setBusiness(schema.getBusiness());
+    registerSchemaRequest.setAutoETLEnabled(schema.getAutoETLEnabled());
     log.debug(String.format("Forwarding registering schema request %s to %s",
                             registerSchemaRequest, baseUrl));
     try {
@@ -1021,7 +1039,20 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
       log.error("Empty schema");
       throw new InvalidSchemaException("Empty schema");
     }
+    //Add compulsory business check logic
+    if (schema.getBusiness() == null || "".equals(schema.getBusiness())) {
+      log.error("No business found in schema definition:{}", schema);
+      throw new InvalidSchemaException("No business in schema");
+    }
     ParsedSchema parsedSchema = parseSchema(schema, isNew);
+    if (schema.getAutoETLEnabled() && schema.getSchemaType().equals("PROTOBUF")) {
+      ProtobufSchema protobufSchema = (ProtobufSchema)parsedSchema;
+      int messageCount = protobufSchema.getMessageCount();
+      log.info("Running message count check for PB AutoETL schema, found {} messages for {}", messageCount);
+      if (messageCount > 1) {
+        throw new InvalidSchemaException("For AutoETL enabled top level schema, only 1 message allowed. Found message num:" + messageCount);
+      }
+    }
     try {
       parsedSchema.validate();
     } catch (Exception e) {
@@ -1037,7 +1068,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
     return parsedSchema;
   }
 
-  private ParsedSchema parseSchema(Schema schema) throws InvalidSchemaException {
+  public ParsedSchema parseSchema(Schema schema) throws InvalidSchemaException {
     return parseSchema(schema, false);
   }
 
@@ -1416,7 +1447,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
     }
   }
 
-  private List<SchemaValue> getAllSchemaValues(String subject)
+  public List<SchemaValue> getAllSchemaValues(String subject)
       throws SchemaRegistryException {
     try (CloseableIterator<SchemaRegistryValue> allVersions = allVersions(subject, false)) {
       return sortSchemaValuesByVersion(allVersions);
@@ -1635,7 +1666,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
     return isCompatibleWithPrevious(subject, parsedSchema, prevParsedSchemas);
   }
 
-  private List<String> isCompatibleWithPrevious(String subject,
+  public List<String> isCompatibleWithPrevious(String subject,
                                                 ParsedSchema parsedSchema,
                                                 List<ParsedSchema> previousSchemas)
       throws SchemaRegistryException {
@@ -1828,7 +1859,9 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
             .map(ref -> new io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference(
                 ref.getName(), ref.getSubject(), ref.getVersion()))
             .collect(Collectors.toList()),
-        schemaValue.getSchema()
+        schemaValue.getSchema(),
+        schemaValue.getBusiness(),
+        schemaValue.getAutoETLEnabled()
     );
   }
 

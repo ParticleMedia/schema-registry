@@ -28,7 +28,6 @@ public class RegisterSchemaRequestTest {
     request.setSchema("string");
     request.setId(100);
     request.setVersion(10);
-
     assertEquals("{\"version\":10,\"id\":100,\"schema\":\"string\"}", request.toJson());
   }
 

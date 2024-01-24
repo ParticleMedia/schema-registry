@@ -110,7 +110,9 @@ public class SubjectsResource {
         -1,
         request.getSchemaType() != null ? request.getSchemaType() : AvroSchema.TYPE,
         request.getReferences(),
-        request.getSchema()
+        request.getSchema(),
+        request.getBusiness(),
+        request.getAutoETLEnabled()
     );
     io.confluent.kafka.schemaregistry.client.rest.entities.Schema matchingSchema;
     try {

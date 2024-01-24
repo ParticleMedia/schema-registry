@@ -35,6 +35,10 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SchemaValue extends SubjectValue implements Comparable<SchemaValue> {
 
+  private static final String DEFAULT_BUSINESS = "default";
+
+  private static final boolean DEFAULT_AUTO_ETL_ENABLED = false;
+
   @Min(1)
   private Integer version;
   @Min(0)
@@ -45,6 +49,10 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
   private List<SchemaReference> references = Collections.emptyList();
   @NotEmpty
   private boolean deleted;
+
+  private String business;
+
+  private boolean autoETLEnabled;
 
   @VisibleForTesting
   public SchemaValue(@JsonProperty("subject") String subject,
@@ -57,9 +65,11 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.id = id;
     this.schema = schema;
     this.deleted = deleted;
+    this.business = DEFAULT_BUSINESS;
+    this.autoETLEnabled = DEFAULT_AUTO_ETL_ENABLED;
   }
 
-  @JsonCreator
+//  @JsonCreator
   public SchemaValue(@JsonProperty("subject") String subject,
                      @JsonProperty("version") Integer version,
                      @JsonProperty("id") Integer id,
@@ -74,6 +84,29 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.references = references != null ? references : Collections.emptyList();
     this.schema = schema;
     this.deleted = deleted;
+    this.business = DEFAULT_BUSINESS;
+    this.autoETLEnabled = DEFAULT_AUTO_ETL_ENABLED;
+  }
+
+  @JsonCreator
+  public SchemaValue(@JsonProperty("subject") String subject,
+                     @JsonProperty("version") Integer version,
+                     @JsonProperty("id") Integer id,
+                     @JsonProperty("schemaType") String schemaType,
+                     @JsonProperty("references") List<SchemaReference> references,
+                     @JsonProperty("schema") String schema,
+                     @JsonProperty("deleted") boolean deleted,
+                     @JsonProperty("business") String business,
+                     @JsonProperty("autoETLEnabled") Boolean autoETLEnabled) {
+    super(subject);
+    this.version = version;
+    this.id = id;
+    this.schemaType = schemaType != null ? schemaType : AvroSchema.TYPE;
+    this.references = references != null ? references : Collections.emptyList();
+    this.schema = schema;
+    this.deleted = deleted;
+    this.business = business == null ? DEFAULT_BUSINESS : business;
+    this.autoETLEnabled = autoETLEnabled == null ? DEFAULT_AUTO_ETL_ENABLED : autoETLEnabled;
   }
 
   public SchemaValue(Schema schemaEntity) {
@@ -88,6 +121,8 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
         .collect(Collectors.toList());
     this.schema = schemaEntity.getSchema();
     this.deleted = false;
+    this.business = schemaEntity.getBusiness();
+    this.autoETLEnabled = schemaEntity.getAutoETLEnabled();
   }
 
   @JsonProperty("version")
@@ -151,6 +186,27 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     this.deleted = deleted;
   }
 
+
+  @JsonProperty("business")
+  public String getBusiness() {
+    return this.business;
+  }
+
+  @JsonProperty("business")
+  public void setBusiness(String business) {
+    this.business = business;
+  }
+
+  @JsonProperty("autoETLEnabled")
+  public boolean getAutoETLEnabled() {
+    return this.autoETLEnabled;
+  }
+
+  @JsonProperty("autoETLEnabled")
+  public void setAutoETLEnabled(boolean autoETLEnabled) {
+    this.autoETLEnabled = autoETLEnabled;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -183,6 +239,12 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     if (deleted != that.deleted) {
       return false;
     }
+    if (!this.business.equals(that.business)) {
+      return false;
+    }
+    if (this.autoETLEnabled != that.autoETLEnabled) {
+      return false;
+    }
 
     return true;
   }
@@ -196,6 +258,8 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     result = 31 * result + schema.hashCode();
     result = 31 * result + references.hashCode();
     result = 31 * result + (deleted ? 1 : 0);
+    result = 31 * result + business.hashCode();
+    result = 31 * result + (autoETLEnabled ? 1 : 0);
     return result;
   }
 
@@ -208,6 +272,8 @@ public class SchemaValue extends SubjectValue implements Comparable<SchemaValue>
     sb.append("schemaType=" + this.schemaType + ",");
     sb.append("references=" + this.references + ",");
     sb.append("schema=" + this.schema + ",");
+    sb.append("business=" + this.business + ",");
+    sb.append("autoETLEnabled=" + this.autoETLEnabled + ",");
     sb.append("deleted=" + this.deleted + "}");
     return sb.toString();
   }

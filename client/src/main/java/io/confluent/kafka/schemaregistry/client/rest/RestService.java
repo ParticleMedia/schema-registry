@@ -100,6 +100,9 @@ public class RestService implements Configurable {
   private static final TypeReference<List<Integer>> GET_REFERENCED_BY_RESPONSE_TYPE =
       new TypeReference<List<Integer>>() {
       };
+  private static final TypeReference<List<String>> GET_DEPENDED_BY_RESPONSE_TYPE =
+          new TypeReference<List<String>>() {
+          };
   private static final TypeReference<List<Integer>> ALL_VERSIONS_RESPONSE_TYPE =
       new TypeReference<List<Integer>>() {
       };
@@ -487,6 +490,17 @@ public class RestService implements Configurable {
     request.setSchema(schemaString);
     request.setSchemaType(schemaType);
     request.setReferences(references);
+    return registerSchema(request, subject, normalize);
+  }
+
+  public int registerSchema(String schemaString, String schemaType,
+                            List<SchemaReference> references, String subject, boolean normalize, boolean autoETLEnabled)
+          throws IOException, RestClientException {
+    RegisterSchemaRequest request = new RegisterSchemaRequest();
+    request.setSchema(schemaString);
+    request.setSchemaType(schemaType);
+    request.setReferences(references);
+    request.setAutoETLEnabled(autoETLEnabled);
     return registerSchema(request, subject, normalize);
   }
 
@@ -928,6 +942,22 @@ public class RestService implements Configurable {
 
     List<Integer> response = httpRequest(path, "GET", null, requestProperties,
         GET_REFERENCED_BY_RESPONSE_TYPE);
+    return response;
+  }
+
+  public List<String> getDependedBy(String subject, int version) throws IOException,
+          RestClientException {
+    return getDependedBy(DEFAULT_REQUEST_PROPERTIES, subject, version);
+  }
+
+  public List<String> getDependedBy(Map<String, String> requestProperties,
+                                     String subject, int version)
+          throws IOException, RestClientException {
+    UriBuilder builder = UriBuilder.fromPath("/subjects/{subject}/versions/{version}/dependedby");
+    String path = builder.build(subject, version).toString();
+
+    List<String> response = httpRequest(path, "GET", null, requestProperties,
+            GET_DEPENDED_BY_RESPONSE_TYPE);
     return response;
   }
 

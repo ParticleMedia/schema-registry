@@ -1524,7 +1524,49 @@ public class ProtobufSchema implements ParsedSchema {
 
   @Override
   public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
-    return Collections.singletonList("Not support for Protobuf schema");
+    log.info("Running addonly schema compatibility checks for Protobuf.");
+    if (!schemaType().equals(previousSchema.schemaType())) {
+      return Collections.singletonList("Incompatible because of different schema type");
+    }
+    final List<Difference> differences = SchemaDiff.compare(
+            (ProtobufSchema) previousSchema, this
+    );
+    final List<Difference> incompatibleDiffs = differences.stream()
+            .filter(diff -> !SchemaDiff.COMPATIBLE_CHANGES.contains(diff.getType()))
+            .collect(Collectors.toList());
+
+    boolean isCompatible = incompatibleDiffs.isEmpty();
+    if (!isCompatible) {
+      boolean first = true;
+      List<String> errorMessages = new ArrayList<>();
+      for (Difference incompatibleDiff : incompatibleDiffs) {
+        if (first) {
+          // Log first incompatible change as warning
+          log.warn("Found incompatible change: {}", incompatibleDiff);
+          errorMessages.add(String.format("Found incompatible change: %s", incompatibleDiff));
+          first = false;
+        } else {
+          log.debug("Found incompatible change: {}", incompatibleDiff);
+          errorMessages.add(String.format("Found incompatible change: %s", incompatibleDiff));
+        }
+      }
+      return errorMessages;
+    }
+
+    return AddOnlySchemaChecker.checkCompatibility(previousSchema, this);
+  }
+
+  //This function is used to check how many messages are stored in a schema. For AutoETL purpose, top level
+  //schema can only have 1 message. Otherwise, offline tasks will not be able to identify target data.
+  public int getMessageCount() {
+    List<TypeElement> typeElements =     this.rawSchema().getTypes();
+    int counter = 0;
+    for (TypeElement typeElement : typeElements) {
+      if (typeElement instanceof MessageElement) {
+        counter++;
+      }
+    }
+    return counter;
   }
 
   @Override
