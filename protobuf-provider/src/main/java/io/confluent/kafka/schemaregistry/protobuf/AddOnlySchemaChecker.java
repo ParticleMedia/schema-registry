@@ -114,37 +114,54 @@ public class AddOnlySchemaChecker {
 //        System.out.println(String.format("DEBUG, dealing with %s", msgProtoType));
         String originalFullName = context.resolve(msgProtoType.toString(), true);
         log.info(String.format("DEBUG, dealing with %s", originalFullName));
+        if (originalFullName == null) {
+            log.info("originalFullName is null for message %s, assume this come from an import, will skip checking.", msgProtoType);
+            return;
+        }
 //        System.out.println(String.format("DEBUG, dealing with %s", originalFullName));
         Context.TypeElementInfo originalType = context.getType(originalFullName, true);
 
-        MessageElement messageElement = (MessageElement) originalType.type();
+        // It's possible to compare Enum here. If Enum, will skip.
+        if (originalType.type() instanceof EnumElement) {
+            log.info("Seeing enum, will skip checking for %s.", originalType);
+        } else if (originalType.type() instanceof MessageElement) {
+            log.info("Seeing MessageElement %s, will continue recursive checking.", originalType);
+            MessageElement messageElement = (MessageElement) originalType.type();
 
-        List<Pair<Integer, FieldElement>> fieldOrderSequence = messageElement.getFields().stream()
-                .map(fieldElement -> Pair.of(fieldElement.getTag(), fieldElement)).collect(Collectors.toList());
+            List<Pair<Integer, FieldElement>> fieldOrderSequence = messageElement.getFields().stream()
+                    .map(fieldElement -> Pair.of(fieldElement.getTag(), fieldElement)).collect(Collectors.toList());
 
-        for(int i = 1; i <= fieldOrderSequence.size(); i++) {
-            if (fieldOrderSequence.get(i-1).first != i) {
-                errorMsg.add(String.format("Schema is not in sequential increasing order, field:%s in schema:%s", fieldOrderSequence.get(i-1).second, messageElement));
-                errorMsg.add("\n");
+            for (int i = 1; i <= fieldOrderSequence.size(); i++) {
+                if (fieldOrderSequence.get(i - 1).first != i) {
+                    errorMsg.add(String.format("Schema is not in sequential increasing order, field:%s in schema:%s", fieldOrderSequence.get(i - 1).second, messageElement));
+                    errorMsg.add("\n");
+                }
+                FieldElement fieldElement = fieldOrderSequence.get(i - 1).second;
+                String fieldType = fieldElement.getType();
+                ProtoType protoType = ProtoType.get(fieldType);
+
+                Type type = type(context, protoType, true);
+                switch (type) {
+                    case SCALAR:
+                        log.info(String.format("No need to compare sequence for simple scalar type:%s", protoType));
+                        break;
+                    case MESSAGE:
+                        String lookupName = context.resolve(protoType.toString(), true);
+                        if (lookupName == null) {
+                            log.info("Lookup name is null for message %s, assume this come from an import, will skip checking.", msgProtoType);
+                        } else {
+                            checkMessageSequenceOrder(context, errorMsg, protoType);
+                        }
+                        break;
+                    case MAP:
+                        checkMapSequenceOrder(context, errorMsg, protoType);
+                        break;
+                    default:
+                        break;
+                }
             }
-            FieldElement fieldElement = fieldOrderSequence.get(i-1).second;
-            String fieldType = fieldElement.getType();
-            ProtoType protoType = ProtoType.get(fieldType);
-
-            Type type = type(context, protoType, true);
-            switch (type) {
-                case SCALAR:
-                    log.info(String.format("No need to compare sequence for simple scalar type:%s", protoType));
-                    break;
-                case MESSAGE:
-                    checkMessageSequenceOrder(context, errorMsg, protoType);
-                    break;
-                case MAP:
-                    checkMapSequenceOrder(context, errorMsg, protoType);
-                    break;
-                default:
-                    break;
-            }
+        } else {
+            throw new RuntimeException(String.format("Unknown type %s", originalType));
         }
     }
 
