@@ -43,8 +43,10 @@ public class MessageSchemaDiff {
     try (Context.SchemaScope schemaScope = ctx.enterSchema(original)) {
       if (schemaScope != null) {
         Map<Integer, FieldElement> originalByTag = new HashMap<>();
+        int maxOriginalTag = Integer.MIN_VALUE;
         for (FieldElement field : original.getFields()) {
           originalByTag.put(field.getTag(), field);
+          maxOriginalTag = Math.max(maxOriginalTag, field.getTag());
         }
         Map<Integer, FieldElement> updateByTag = new HashMap<>();
         for (FieldElement field : update.getFields()) {
@@ -111,6 +113,9 @@ public class MessageSchemaDiff {
                 ctx.addDifference(REQUIRED_FIELD_ADDED);
               } else {
                 ctx.addDifference(FIELD_ADDED);
+                if (updateField.getTag() < maxOriginalTag) {
+                  ctx.addDifference(FIELD_ADDED_IN_THE_MIDDLE);
+                }
               }
             } else {
               FieldSchemaDiff.compare(ctx, originalField, updateField);

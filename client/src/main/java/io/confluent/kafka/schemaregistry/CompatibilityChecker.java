@@ -69,12 +69,11 @@ public class CompatibilityChecker {
   public static final CompatibilityChecker NO_OP_CHECKER =
       new CompatibilityChecker(NO_OP_VALIDATOR);
 
-// Todo, fix this. To unblock business, disable addonly check at the moment.
-//  private static final SchemaValidator ADDONLY_VALIDATOR =
-//          new SchemaValidatorBuilder().addOnlyStrategy()
-//                  .validateLatest();
   private static final SchemaValidator ADDONLY_VALIDATOR =
-          (schema, schemas) -> Collections.emptyList();
+          new SchemaValidatorBuilder().addOnlyStrategy()
+                  .validateLatest();
+//  private static final SchemaValidator ADDONLY_VALIDATOR =
+//          (schema, schemas) -> Collections.emptyList();
   public static final CompatibilityChecker ADDONLY_CHECKER = new CompatibilityChecker(
           ADDONLY_VALIDATOR);
 

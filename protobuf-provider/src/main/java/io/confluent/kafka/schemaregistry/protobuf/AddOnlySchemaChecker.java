@@ -21,19 +21,19 @@ import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.*;
 public class AddOnlySchemaChecker {
     private static Logger log = LoggerFactory.getLogger(AddOnlySchemaChecker.class);
 
-    public static final Set<Difference.Type> COMPATIBLE_CHANGES;
-
-    static {
-        Set<Difference.Type> changes = new HashSet<>();
-
-        changes.add(MESSAGE_ADDED);
-        changes.add(ENUM_ADDED);
-//        changes.add(ENUM_REMOVED);
-        changes.add(ENUM_CONST_ADDED);
-        changes.add(FIELD_ADDED);
-
-        COMPATIBLE_CHANGES = Collections.unmodifiableSet(changes);
-    }
+//    public static final Set<Difference.Type> COMPATIBLE_CHANGES;
+//
+//    static {
+//        Set<Difference.Type> changes = new HashSet<>();
+//
+//        changes.add(MESSAGE_ADDED);
+//        changes.add(ENUM_ADDED);
+////        changes.add(ENUM_REMOVED);
+//        changes.add(ENUM_CONST_ADDED);
+//        changes.add(FIELD_ADDED);
+//
+//        COMPATIBLE_CHANGES = Collections.unmodifiableSet(changes);
+//    }
 
     static class Pair<F,S> {
         private F first;
@@ -56,7 +56,7 @@ public class AddOnlySchemaChecker {
         log.info("Starting basic field change checks.");
         //First check to see if basic change differences are accepted.
         final List<Difference> incompatibleDiffs = differences.stream()
-                .filter(diff -> !COMPATIBLE_CHANGES.contains(diff.getType()))
+                .filter(diff -> !SchemaDiff.ADD_ONLY_COMPATIBLE_CHANGES.contains(diff.getType()))
                 .collect(Collectors.toList());
         boolean isCompatible = incompatibleDiffs.isEmpty();
         if (!isCompatible) {
@@ -123,9 +123,9 @@ public class AddOnlySchemaChecker {
 
         // It's possible to compare Enum here. If Enum, will skip.
         if (originalType.type() instanceof EnumElement) {
-            log.info("Seeing enum, will skip checking for %s.", originalType);
+            log.info(String.format("Seeing enum, will skip checking for %s.", originalType));
         } else if (originalType.type() instanceof MessageElement) {
-            log.info("Seeing MessageElement %s, will continue recursive checking.", originalType);
+            log.info(String.format("Seeing MessageElement %s, will continue recursive checking.", originalType));
             MessageElement messageElement = (MessageElement) originalType.type();
 
             List<Pair<Integer, FieldElement>> fieldOrderSequence = messageElement.getFields().stream()
@@ -148,7 +148,7 @@ public class AddOnlySchemaChecker {
                     case MESSAGE:
                         String lookupName = context.resolve(protoType.toString(), true);
                         if (lookupName == null) {
-                            log.info("Lookup name is null for message %s, assume this come from an import, will skip checking.", msgProtoType);
+                            log.info(String.format("Lookup name is null for message %s, assume this come from an import, will skip checking.", msgProtoType));
                         } else {
                             checkMessageSequenceOrder(context, errorMsg, protoType);
                         }

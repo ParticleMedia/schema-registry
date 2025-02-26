@@ -1532,7 +1532,7 @@ public class ProtobufSchema implements ParsedSchema {
             (ProtobufSchema) previousSchema, this
     );
     final List<Difference> incompatibleDiffs = differences.stream()
-            .filter(diff -> !SchemaDiff.COMPATIBLE_CHANGES.contains(diff.getType()))
+            .filter(diff -> !SchemaDiff.ADD_ONLY_COMPATIBLE_CHANGES.contains(diff.getType()))
             .collect(Collectors.toList());
 
     boolean isCompatible = incompatibleDiffs.isEmpty();
@@ -1553,7 +1553,8 @@ public class ProtobufSchema implements ParsedSchema {
       return errorMessages;
     }
 
-    return AddOnlySchemaChecker.checkCompatibility(previousSchema, this);
+//    return AddOnlySchemaChecker.checkCompatibility(previousSchema, this);
+    return Collections.emptyList();
   }
 
   //This function is used to check how many messages are stored in a schema. For AutoETL purpose, top level
