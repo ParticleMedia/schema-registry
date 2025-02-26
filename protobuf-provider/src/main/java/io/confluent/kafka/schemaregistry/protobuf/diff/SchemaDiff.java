@@ -32,28 +32,21 @@ import java.util.Set;
 
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ENUM_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ENUM_CONST_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ENUM_CONST_CHANGED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ENUM_CONST_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ENUM_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_NAME_CHANGED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_STRING_OR_BYTES_LABEL_CHANGED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.MESSAGE_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.MESSAGE_MOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.MESSAGE_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ONEOF_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ONEOF_FIELD_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ONEOF_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.PACKAGE_CHANGED;
+import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.*;
 
 public class SchemaDiff {
   public static final Set<Difference.Type> COMPATIBLE_CHANGES;
+  public static final Set<Difference.Type> ADD_ONLY_COMPATIBLE_CHANGES;
 
   static {
     Set<Difference.Type> changes = new HashSet<>();
+
+    changes.add(MESSAGE_ADDED);
+    changes.add(ENUM_ADDED);
+    changes.add(ENUM_CONST_ADDED);
+    changes.add(FIELD_ADDED);
+
+    ADD_ONLY_COMPATIBLE_CHANGES = Collections.unmodifiableSet(changes);
 
     changes.add(PACKAGE_CHANGED);
     changes.add(MESSAGE_ADDED);
@@ -70,6 +63,7 @@ public class SchemaDiff {
     changes.add(ONEOF_ADDED);
     changes.add(ONEOF_REMOVED);
     changes.add(ONEOF_FIELD_ADDED);
+    changes.add(FIELD_ADDED_IN_THE_MIDDLE);
 
     COMPATIBLE_CHANGES = Collections.unmodifiableSet(changes);
   }
