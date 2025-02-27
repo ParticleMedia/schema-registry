@@ -26,13 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.FIELD_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.MULTIPLE_FIELDS_MOVED_TO_ONEOF;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ONEOF_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.ONEOF_REMOVED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.REQUIRED_FIELD_ADDED;
-import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.REQUIRED_FIELD_REMOVED;
+import static io.confluent.kafka.schemaregistry.protobuf.diff.Difference.Type.*;
 
 public class MessageSchemaDiff {
   static void compare(
