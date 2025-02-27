@@ -17,6 +17,7 @@
 package io.confluent.kafka.schemaregistry.protobuf.diff;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.wire.schema.internal.parser.EnumElement;
 import com.squareup.wire.schema.internal.parser.MessageElement;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
@@ -46,7 +47,7 @@ public class SchemaDiff {
     changes.add(ENUM_CONST_ADDED);
     changes.add(FIELD_ADDED);
 
-    ADD_ONLY_COMPATIBLE_CHANGES = Collections.unmodifiableSet(changes);
+    ADD_ONLY_COMPATIBLE_CHANGES = changes.stream().collect(ImmutableSet.toImmutableSet());
 
     changes.add(PACKAGE_CHANGED);
     changes.add(MESSAGE_ADDED);
