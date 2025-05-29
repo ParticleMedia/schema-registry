@@ -221,10 +221,8 @@ public class AvroSchema implements ParsedSchema {
       List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
       // check size
       if (newFields.size() < previousFields.size()) {
-        System.out.println(previousFields);
-        System.out.println(newFields);
         return Collections.singletonList("New schema fields size is less than previous schema, "
-                + schemaObj.getName() + newFields.size() + previousFields.size());
+                + schemaObj.getName() + "," + previousFields.size() + "," + newFields.size());
       }
 
       for (int i = 0; i < previousFields.size(); i++) {
@@ -239,8 +237,13 @@ public class AvroSchema implements ParsedSchema {
 //        if (!checkResult.isEmpty()) {
 //          return checkResult;
 //        }
+        Schema newSubSchema;
+        if (Schema.Type.UNION != newField.schema().getType()) {
+          newSubSchema = newField.schema();
+        } else {
+          newSubSchema = newField.schema().getTypes().get(1);
+        }
 
-        Schema newSubSchema = newField.schema().getTypes().get(1);
         if (Schema.Type.UNION != previousField.schema().getType()) {
           List<String> compatibleCheckResult = new AvroSchema(newSubSchema)
                   .isAddOnlyCompatible(new AvroSchema(previousField.schema()));
