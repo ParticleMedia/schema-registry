@@ -233,10 +233,12 @@ public class AvroSchema implements ParsedSchema {
         if (previousField.equals(newField)) {
           continue;
         }
-        List<String> checkResult = newOrModifiedFieldCheck(newField);
-        if (!checkResult.isEmpty()) {
-          return checkResult;
-        }
+
+        // skip union type check for existing field
+//        List<String> checkResult = newOrModifiedFieldCheck(newField);
+//        if (!checkResult.isEmpty()) {
+//          return checkResult;
+//        }
 
         Schema newSubSchema = newField.schema().getTypes().get(1);
         if (Schema.Type.UNION != previousField.schema().getType()) {
