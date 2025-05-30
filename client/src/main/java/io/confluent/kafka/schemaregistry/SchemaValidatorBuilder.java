@@ -20,6 +20,8 @@
 
 package io.confluent.kafka.schemaregistry;
 
+import io.confluent.kafka.schemaregistry.avro.AvroSchema;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -79,6 +81,9 @@ public final class SchemaValidatorBuilder {
         ParsedSchema existing = schemas.next();
         return strategy.validate(toValidate, existing);
       }
+      if (toValidate.schemaType().equals("AVRO")) {
+        return ((AvroSchema) toValidate).fieldCheck();
+      }
       return Collections.emptyList();
     };
   }
@@ -91,6 +96,9 @@ public final class SchemaValidatorBuilder {
         if (!errorMessages.isEmpty()) {
           return errorMessages;
         }
+      }
+      if (toValidate.schemaType().equals("AVRO")) {
+        return ((AvroSchema) toValidate).fieldCheck();
       }
       return Collections.emptyList();
     };
