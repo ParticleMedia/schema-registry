@@ -292,6 +292,16 @@ public class AvroSchema implements ParsedSchema {
     }
   }
 
+  public List<String> fieldCheck() {
+    for (Schema.Field field : schemaObj.getFields()) {
+      List<String> result = newOrModifiedFieldCheck(field);
+      if (!result.isEmpty()) {
+        return result;
+      }
+    }
+    return Collections.emptyList();
+  }
+
   private List<String> newOrModifiedFieldCheck(Schema.Field field) {
     // modified schema must be UNION type
     if (Schema.Type.UNION != field.schema().getType()) {
