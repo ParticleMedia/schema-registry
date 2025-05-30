@@ -503,6 +503,13 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
 //        }
 //        isAddOnlyCompatible = sequentialSchemaInOrderCheckErrMsgs.isEmpty();
 //      }
+      if (schema.getSchemaType().equals("AVRO") && undeletedVersions.isEmpty()) {
+        List<String> fieldCheckResult = ((AvroSchema) parsedSchema).fieldCheck();
+        if (!fieldCheckResult.isEmpty()) {
+          throw new IncompatibleSchemaException(fieldCheckResult.get(0));
+        }
+      }
+
 
       if (normalize) {
         parsedSchema = parsedSchema.normalize();
