@@ -212,11 +212,39 @@ public class AvroSchema implements ParsedSchema {
 
   @Override
   public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
+
     if (!schemaType().equals(previousSchema.schemaType())) {
       return Collections.singletonList("Incompatible because of different schema type");
     }
 
+    AvroSchema previousAvroSchema = (AvroSchema) previousSchema;
+
     try {
+
+      if (previousAvroSchema.schemaObj.equals(schemaObj)) {
+        return Collections.emptyList();
+      }
+
+      if (previousAvroSchema.schemaObj.isUnion() && !schemaObj.isUnion()) {
+        return Collections.singletonList("New schema is union type while earlier schema is not");
+      }
+      if (previousAvroSchema.schemaObj.isUnion() && schemaObj.isUnion()) {
+        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(
+                new AvroSchema(previousAvroSchema.schemaObj.getTypes().get(1)));
+      }
+      if (schemaObj.isUnion()) {
+        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(previousAvroSchema);
+      }
+
+      if (Schema.Type.ARRAY == schemaObj.getType()) {
+        return new AvroSchema(schemaObj.getElementType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getElementType()));
+      } else if (Schema.Type.MAP == schemaObj.getType()) {
+        return new AvroSchema(schemaObj.getValueType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getValueType()));
+      } else if (Schema.Type.RECORD != schemaObj.getType()) {
+        return Collections.singletonList(
+                String.format("Type %s not support", schemaObj.getType().toString()));
+      }
+
       List<Schema.Field> newFields = this.schemaObj.getFields();
       List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
       // check size
@@ -263,15 +291,15 @@ public class AvroSchema implements ParsedSchema {
             Schema newValueType = newSubSchema.getElementType();
             Schema previousValueType = previousSubSchema.getElementType();
 
-            if (newValueType.isUnion()) {
-              newValueType = newValueType.getTypes().get(1);
-            }
-            if (previousValueType.isUnion()) {
-              previousValueType = previousValueType.getTypes().get(1);
-            }
-            if (newValueType.equals(previousValueType)) {
-              continue;
-            }
+//            if (newValueType.isUnion()) {
+//              newValueType = newValueType.getTypes().get(1);
+//            }
+//            if (previousValueType.isUnion()) {
+//              previousValueType = previousValueType.getTypes().get(1);
+//            }
+//            if (newValueType.equals(previousValueType)) {
+//              continue;
+//            }
 
             List<String> compatibleCheckResult = new AvroSchema(newValueType)
                     .isAddOnlyCompatible(new AvroSchema(previousValueType));
