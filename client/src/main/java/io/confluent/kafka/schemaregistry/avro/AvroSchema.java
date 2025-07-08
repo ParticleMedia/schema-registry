@@ -259,14 +259,42 @@ public class AvroSchema implements ParsedSchema {
               return compatibleCheckResult;
             }
           } else if (Schema.Type.ARRAY == newSubSchema.getType()) {
-            List<String> compatibleCheckResult = new AvroSchema(newSubSchema.getElementType())
-                    .isAddOnlyCompatible(new AvroSchema(previousSubSchema.getElementType()));
+
+            Schema newValueType = newSubSchema.getElementType();
+            Schema previousValueType = previousSubSchema.getElementType();
+
+            if (newValueType.isUnion()) {
+              newValueType = newValueType.getTypes().get(1);
+            }
+            if (previousValueType.isUnion()) {
+              previousValueType = previousValueType.getTypes().get(1);
+            }
+            if (newValueType.equals(previousValueType)) {
+              continue;
+            }
+
+            List<String> compatibleCheckResult = new AvroSchema(newValueType)
+                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
             if (!compatibleCheckResult.isEmpty()) {
               return compatibleCheckResult;
             }
           } else if (Schema.Type.MAP == newSubSchema.getType()) {
-            List<String> compatibleCheckResult = new AvroSchema(newSubSchema.getValueType())
-                    .isAddOnlyCompatible(new AvroSchema(previousSubSchema.getValueType()));
+
+            Schema newValueType = newSubSchema.getValueType();
+            Schema previousValueType = previousSubSchema.getValueType();
+
+            if (newValueType.isNullable()) {
+              newValueType = newValueType.getTypes().get(1);
+            }
+            if (previousValueType.isNullable()) {
+              previousValueType = previousValueType.getTypes().get(1);
+            }
+            if (newValueType.equals(previousValueType)) {
+              continue;
+            }
+
+            List<String> compatibleCheckResult = new AvroSchema(newValueType)
+                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
             if (!compatibleCheckResult.isEmpty()) {
               return compatibleCheckResult;
             }
