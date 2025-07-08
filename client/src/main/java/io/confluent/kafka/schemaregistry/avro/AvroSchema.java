@@ -311,15 +311,15 @@ public class AvroSchema implements ParsedSchema {
             Schema newValueType = newSubSchema.getValueType();
             Schema previousValueType = previousSubSchema.getValueType();
 
-            if (newValueType.isNullable()) {
-              newValueType = newValueType.getTypes().get(1);
-            }
-            if (previousValueType.isNullable()) {
-              previousValueType = previousValueType.getTypes().get(1);
-            }
-            if (newValueType.equals(previousValueType)) {
-              continue;
-            }
+//            if (newValueType.isNullable()) {
+//              newValueType = newValueType.getTypes().get(1);
+//            }
+//            if (previousValueType.isNullable()) {
+//              previousValueType = previousValueType.getTypes().get(1);
+//            }
+//            if (newValueType.equals(previousValueType)) {
+//              continue;
+//            }
 
             List<String> compatibleCheckResult = new AvroSchema(newValueType)
                     .isAddOnlyCompatible(new AvroSchema(previousValueType));
