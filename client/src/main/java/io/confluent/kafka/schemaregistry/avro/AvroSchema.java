@@ -212,145 +212,208 @@ public class AvroSchema implements ParsedSchema {
 
   @Override
   public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
-
-    if (!schemaType().equals(previousSchema.schemaType())) {
-      return Collections.singletonList("Incompatible because of different schema type");
+    List<String> result;
+    result = check();
+    if (!result.isEmpty()) {
+      return result;
     }
 
-    AvroSchema previousAvroSchema = (AvroSchema) previousSchema;
+    result = isBackwardCompatible(previousSchema);
+    if (!result.isEmpty()) {
+      return result;
+    }
 
-    try {
+//    List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
+//    List<Schema.Field> newFields = this.schemaObj.getFields();
 
-      if (previousAvroSchema.schemaObj.equals(schemaObj)) {
-        return Collections.emptyList();
-      }
+    return checkSchemaCompatibility(((AvroSchema) previousSchema).schemaObj, this.schemaObj);
+//      if (previousFiled.schema().getTypes().get(1).getType() == Schema.Type.MAP) {
+//        new newField.schema().getTypes().get(1)isAddOnlyCompatible()
+//      }
+//    }
 
-      if (previousAvroSchema.schemaObj.isUnion() && !schemaObj.isUnion()) {
-        return Collections.singletonList("New schema is union type while earlier schema is not");
-      }
-      if (previousAvroSchema.schemaObj.isUnion() && schemaObj.isUnion()) {
-        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(
-                new AvroSchema(previousAvroSchema.schemaObj.getTypes().get(1)));
-      }
-      if (schemaObj.isUnion()) {
-        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(previousAvroSchema);
-      }
+//    return Collections.emptyList();
+  }
 
-      if (Schema.Type.ARRAY == schemaObj.getType()) {
-        return new AvroSchema(schemaObj.getElementType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getElementType()));
-      } else if (Schema.Type.MAP == schemaObj.getType()) {
-        return new AvroSchema(schemaObj.getValueType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getValueType()));
-      } else if (Schema.Type.RECORD != schemaObj.getType()) {
-        return Collections.singletonList(
-                String.format("Type %s not support", schemaObj.getType().toString()));
-      }
+  private static List<String> checkSchemaCompatibility(Schema previousSchema, Schema newSchema) {
+    if (previousSchema.getType() == Schema.Type.UNION) {
+      return checkSchemaCompatibility(previousSchema.getTypes().get(1), newSchema);
+    }
+    if (newSchema.getType() == Schema.Type.UNION) {
+      return checkSchemaCompatibility(previousSchema, newSchema.getTypes().get(1));
+    }
+    if (previousSchema.getType() != newSchema.getType()) {
+      return Collections.singletonList("Field type not equal, earlier:"
+              + previousSchema.getType() + ", new:" + newSchema.getType());
+    }
 
-      List<Schema.Field> newFields = this.schemaObj.getFields();
-      List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
-      // check size
-      if (newFields.size() < previousFields.size()) {
-        return Collections.singletonList("New schema fields size is less than previous schema, "
-                + schemaObj.getName() + "," + previousFields.size() + "," + newFields.size());
-      }
-
-      for (int i = 0; i < previousFields.size(); i++) {
-        Schema.Field previousField = previousFields.get(i);
-        Schema.Field newField = newFields.get(i);
-        if (previousField.equals(newField)) {
-          continue;
+    if (previousSchema.getType() == Schema.Type.ARRAY) {
+      return checkSchemaCompatibility(previousSchema.getElementType(), newSchema.getElementType());
+    } else if (previousSchema.getType() == Schema.Type.MAP) {
+      return checkSchemaCompatibility(previousSchema.getValueType(), newSchema.getValueType());
+    } else if (previousSchema.getType() == Schema.Type.RECORD) {
+      for (int i = 0; i < previousSchema.getFields().size(); i++) {
+        Schema.Field previousSubField = previousSchema.getFields().get(i);
+        Schema.Field newSubField = newSchema.getFields().get(i);
+        if (!previousSubField.name().equals(newSubField.name())) {
+          return Collections.singletonList("Field name not equal, earlier:"
+                  + previousSubField.name() + ", new:" + newSubField.name());
         }
+        List<String> result = checkSchemaCompatibility(previousSubField.schema(), newSubField.schema());
+        if (!result.isEmpty()) {
+          return result;
+        }
+      }
+    }
 
-        // skip union type check for existing field
-//        List<String> checkResult = newOrModifiedFieldCheck(newField);
+    return Collections.emptyList();
+  }
+
+//  @Override
+//  public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
+//
+//    if (!schemaType().equals(previousSchema.schemaType())) {
+//      return Collections.singletonList("Incompatible because of different schema type");
+//    }
+//
+//    AvroSchema previousAvroSchema = (AvroSchema) previousSchema;
+//
+//    try {
+//
+//      if (previousAvroSchema.schemaObj.equals(schemaObj)) {
+//        return Collections.emptyList();
+//      }
+//
+//      if (previousAvroSchema.schemaObj.isUnion() && !schemaObj.isUnion()) {
+//        return Collections.singletonList("New schema is union type while earlier schema is not");
+//      }
+//      if (previousAvroSchema.schemaObj.isUnion() && schemaObj.isUnion()) {
+//        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(
+//                new AvroSchema(previousAvroSchema.schemaObj.getTypes().get(1)));
+//      }
+//      if (schemaObj.isUnion()) {
+//        return new AvroSchema(schemaObj.getTypes().get(1)).isAddOnlyCompatible(previousAvroSchema);
+//      }
+//
+//      if (Schema.Type.ARRAY == schemaObj.getType()) {
+//        return new AvroSchema(schemaObj.getElementType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getElementType()));
+//      } else if (Schema.Type.MAP == schemaObj.getType()) {
+//        return new AvroSchema(schemaObj.getValueType()).isAddOnlyCompatible(new AvroSchema(previousAvroSchema.schemaObj.getValueType()));
+//      } else if (Schema.Type.RECORD != schemaObj.getType()) {
+//        return Collections.singletonList(
+//                String.format("Type %s not support", schemaObj.getType().toString()));
+//      }
+//
+//      List<Schema.Field> newFields = this.schemaObj.getFields();
+//      List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
+//      // check size
+//      if (newFields.size() < previousFields.size()) {
+//        return Collections.singletonList("New schema fields size is less than previous schema, "
+//                + schemaObj.getName() + "," + previousFields.size() + "," + newFields.size());
+//      }
+//
+//      for (int i = 0; i < previousFields.size(); i++) {
+//        Schema.Field previousField = previousFields.get(i);
+//        Schema.Field newField = newFields.get(i);
+//        if (previousField.equals(newField)) {
+//          continue;
+//        }
+//
+//        // skip union type check for existing field
+////        List<String> checkResult = newOrModifiedFieldCheck(newField);
+////        if (!checkResult.isEmpty()) {
+////          return checkResult;
+////        }
+//        Schema newSubSchema;
+//        if (Schema.Type.UNION != newField.schema().getType()) {
+//          newSubSchema = newField.schema();
+//        } else {
+//          newSubSchema = newField.schema().getTypes().get(1);
+//        }
+//
+//        if (Schema.Type.UNION != previousField.schema().getType()) {
+//          List<String> compatibleCheckResult = new AvroSchema(newSubSchema)
+//                  .isAddOnlyCompatible(new AvroSchema(previousField.schema()));
+//          if (!compatibleCheckResult.isEmpty()) {
+//            return compatibleCheckResult;
+//          }
+//        } else {
+//          Schema previousSubSchema = previousField.schema().getTypes().get(1);
+//          if (Schema.Type.RECORD == newSubSchema.getType()) {
+//            List<String> compatibleCheckResult = new AvroSchema(newSubSchema)
+//                    .isAddOnlyCompatible(new AvroSchema(previousSubSchema));
+//            if (!compatibleCheckResult.isEmpty()) {
+//              return compatibleCheckResult;
+//            }
+//          } else if (Schema.Type.ARRAY == newSubSchema.getType()) {
+//
+//            Schema newValueType = newSubSchema.getElementType();
+//            Schema previousValueType = previousSubSchema.getElementType();
+//
+////            if (newValueType.isUnion()) {
+////              newValueType = newValueType.getTypes().get(1);
+////            }
+////            if (previousValueType.isUnion()) {
+////              previousValueType = previousValueType.getTypes().get(1);
+////            }
+////            if (newValueType.equals(previousValueType)) {
+////              continue;
+////            }
+//
+//            List<String> compatibleCheckResult = new AvroSchema(newValueType)
+//                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
+//            if (!compatibleCheckResult.isEmpty()) {
+//              return compatibleCheckResult;
+//            }
+//          } else if (Schema.Type.MAP == newSubSchema.getType()) {
+//
+//            Schema newValueType = newSubSchema.getValueType();
+//            Schema previousValueType = previousSubSchema.getValueType();
+//
+////            if (newValueType.isNullable()) {
+////              newValueType = newValueType.getTypes().get(1);
+////            }
+////            if (previousValueType.isNullable()) {
+////              previousValueType = previousValueType.getTypes().get(1);
+////            }
+////            if (newValueType.equals(previousValueType)) {
+////              continue;
+////            }
+//
+//            List<String> compatibleCheckResult = new AvroSchema(newValueType)
+//                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
+//            if (!compatibleCheckResult.isEmpty()) {
+//              return compatibleCheckResult;
+//            }
+//          } else {
+//            return Collections.singletonList(
+//                    String.format("Type %s not support", newSubSchema.getType().toString()));
+//          }
+//        }
+//      }
+//      // add field validate
+//      for (int i = previousFields.size(); i < newFields.size(); i++) {
+//        Schema.Field newField = this.schemaObj.getFields().get(i);
+//        List<String> checkResult = fieldCheck(newField);
 //        if (!checkResult.isEmpty()) {
 //          return checkResult;
 //        }
-        Schema newSubSchema;
-        if (Schema.Type.UNION != newField.schema().getType()) {
-          newSubSchema = newField.schema();
-        } else {
-          newSubSchema = newField.schema().getTypes().get(1);
-        }
+//      }
+//      return Collections.emptyList();
+//    } catch (Exception e) {
+//      log.error("Unexpected exception during compatibility check", e);
+//      return Collections.singletonList(
+//              "Unexpected exception during compatibility check: " + e.getMessage());
+//    }
+//  }
 
-        if (Schema.Type.UNION != previousField.schema().getType()) {
-          List<String> compatibleCheckResult = new AvroSchema(newSubSchema)
-                  .isAddOnlyCompatible(new AvroSchema(previousField.schema()));
-          if (!compatibleCheckResult.isEmpty()) {
-            return compatibleCheckResult;
-          }
-        } else {
-          Schema previousSubSchema = previousField.schema().getTypes().get(1);
-          if (Schema.Type.RECORD == newSubSchema.getType()) {
-            List<String> compatibleCheckResult = new AvroSchema(newSubSchema)
-                    .isAddOnlyCompatible(new AvroSchema(previousSubSchema));
-            if (!compatibleCheckResult.isEmpty()) {
-              return compatibleCheckResult;
-            }
-          } else if (Schema.Type.ARRAY == newSubSchema.getType()) {
-
-            Schema newValueType = newSubSchema.getElementType();
-            Schema previousValueType = previousSubSchema.getElementType();
-
-//            if (newValueType.isUnion()) {
-//              newValueType = newValueType.getTypes().get(1);
-//            }
-//            if (previousValueType.isUnion()) {
-//              previousValueType = previousValueType.getTypes().get(1);
-//            }
-//            if (newValueType.equals(previousValueType)) {
-//              continue;
-//            }
-
-            List<String> compatibleCheckResult = new AvroSchema(newValueType)
-                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
-            if (!compatibleCheckResult.isEmpty()) {
-              return compatibleCheckResult;
-            }
-          } else if (Schema.Type.MAP == newSubSchema.getType()) {
-
-            Schema newValueType = newSubSchema.getValueType();
-            Schema previousValueType = previousSubSchema.getValueType();
-
-//            if (newValueType.isNullable()) {
-//              newValueType = newValueType.getTypes().get(1);
-//            }
-//            if (previousValueType.isNullable()) {
-//              previousValueType = previousValueType.getTypes().get(1);
-//            }
-//            if (newValueType.equals(previousValueType)) {
-//              continue;
-//            }
-
-            List<String> compatibleCheckResult = new AvroSchema(newValueType)
-                    .isAddOnlyCompatible(new AvroSchema(previousValueType));
-            if (!compatibleCheckResult.isEmpty()) {
-              return compatibleCheckResult;
-            }
-          } else {
-            return Collections.singletonList(
-                    String.format("Type %s not support", newSubSchema.getType().toString()));
-          }
-        }
-      }
-      // add field validate
-      for (int i = previousFields.size(); i < newFields.size(); i++) {
-        Schema.Field newField = this.schemaObj.getFields().get(i);
-        List<String> checkResult = newOrModifiedFieldCheck(newField);
-        if (!checkResult.isEmpty()) {
-          return checkResult;
-        }
-      }
-      return Collections.emptyList();
-    } catch (Exception e) {
-      log.error("Unexpected exception during compatibility check", e);
-      return Collections.singletonList(
-              "Unexpected exception during compatibility check: " + e.getMessage());
+  public List<String> check() {
+    if (schemaObj.getType() != Schema.Type.RECORD) {
+      return schemaCheck(schemaObj);
     }
-  }
 
-  public List<String> fieldCheck() {
     for (Schema.Field field : schemaObj.getFields()) {
-      List<String> result = newOrModifiedFieldCheck(field);
+      List<String> result = fieldCheck(field);
       if (!result.isEmpty()) {
         return result;
       }
@@ -358,30 +421,65 @@ public class AvroSchema implements ParsedSchema {
     return Collections.emptyList();
   }
 
-  private List<String> newOrModifiedFieldCheck(Schema.Field field) {
+  private List<String> schemaCheck(Schema schema) {
     // modified schema must be UNION type
-    if (Schema.Type.UNION != field.schema().getType()) {
+    if (!schema.isUnion()) {
       return Collections.singletonList(
-              String.format("Schema field %s is not UNION type", field));
+              String.format("Schema %s is not UNION type", schema));
     }
     // must be 2 subtypes
-    if (field.schema().getTypes().size() > 2) {
+    if (schema.getTypes().size() != 2) {
       return Collections.singletonList(
-              String.format("Only support null and 1 subtype for union type"));
+              String.format("Only support null and 1 subtype for union type, schema: %s", schema));
     }
     // first subtype must be null
-    if (!"null".equals(field.schema().getTypes().get(0).getType().getName())) {
+    if (Schema.Type.NULL != schema.getTypes().get(0).getType()) {
       return Collections.singletonList(
-              String.format("New schema field %s is not optional", field));
+              String.format("The first type of new schema %s is not null", schema));
     }
+    Schema subSchema = schema.getTypes().get(1);
+    switch (subSchema.getType()) {
+      case NULL:
+      case BOOLEAN:
+      case INT:
+      case LONG:
+      case FLOAT:
+      case DOUBLE:
+      case BYTES:
+      case STRING:
+      case FIXED:
+      case ENUM:
+        return Collections.emptyList();
+      case ARRAY:
+        return schemaCheck(subSchema.getElementType());
+      case MAP:
+        return schemaCheck(subSchema.getValueType());
+      case RECORD:
+        for (Schema.Field field : subSchema.getFields()) {
+          List<String> result = fieldCheck(field);
+          if (!result.isEmpty()) {
+            return result;
+          }
+        }
+        return Collections.emptyList();
+      default:
+        return Collections.singletonList(
+                String.format("Schema type %s not support", subSchema.getType()));
+    }
+  }
+
+  private List<String> fieldCheck(Schema.Field field) {
     // default value must be null
     if (!field.hasDefaultValue()
+            || field.defaultVal() == null
             || !JsonProperties.Null.class.getName().equals(
             field.defaultVal().getClass().getName())) {
       return Collections.singletonList(
-              String.format("New schema field %s default value is not null", field));
+              String.format("New schema field %s default value must be set to null", field));
     }
-    return Collections.emptyList();
+
+    // check schema
+    return schemaCheck(field.schema());
   }
 
   @Override
