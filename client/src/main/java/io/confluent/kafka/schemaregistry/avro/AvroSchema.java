@@ -218,7 +218,7 @@ public class AvroSchema implements ParsedSchema {
       return result;
     }
 
-    // comment following code to avoid schema name change
+    // comment following code to avoid failure when schema name changes
 //    result = isBackwardCompatible(previousSchema);
 //    if (!result.isEmpty()) {
 //      return result;
