@@ -219,10 +219,10 @@ public class AvroSchema implements ParsedSchema {
     }
 
     // comment following code to avoid failure when schema name changes
-//    result = isBackwardCompatible(previousSchema);
-//    if (!result.isEmpty()) {
-//      return result;
-//    }
+    result = isBackwardCompatible(previousSchema);
+    if (!result.isEmpty()) {
+      return result;
+    }
 
 //    List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
 //    List<Schema.Field> newFields = this.schemaObj.getFields();
