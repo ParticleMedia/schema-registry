@@ -82,7 +82,7 @@ public final class SchemaValidatorBuilder {
         return strategy.validate(toValidate, existing);
       }
       if (toValidate.schemaType().equals("AVRO")) {
-        return ((AvroSchema) toValidate).fieldCheck();
+        return ((AvroSchema) toValidate).check();
       }
       return Collections.emptyList();
     };
@@ -98,7 +98,7 @@ public final class SchemaValidatorBuilder {
         }
       }
       if (toValidate.schemaType().equals("AVRO")) {
-        return ((AvroSchema) toValidate).fieldCheck();
+        return ((AvroSchema) toValidate).check();
       }
       return Collections.emptyList();
     };
