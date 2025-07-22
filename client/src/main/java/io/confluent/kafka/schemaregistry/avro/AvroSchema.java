@@ -213,10 +213,11 @@ public class AvroSchema implements ParsedSchema {
   @Override
   public List<String> isAddOnlyCompatible(ParsedSchema previousSchema) {
     List<String> result;
-    result = check();
-    if (!result.isEmpty()) {
-      return result;
-    }
+    // not check full schema for some legacy schemas may not pass validation
+//    result = check();
+//    if (!result.isEmpty()) {
+//      return result;
+//    }
 
     // comment following code to avoid failure when schema name changes
     result = isBackwardCompatible(previousSchema);
@@ -237,6 +238,11 @@ public class AvroSchema implements ParsedSchema {
   }
 
   private static List<String> checkSchemaCompatibility(Schema previousSchema, Schema newSchema) {
+
+    if (previousSchema.equals(newSchema)) {
+      return Collections.emptyList();
+    }
+
     if (previousSchema.getType() == Schema.Type.UNION) {
       return checkSchemaCompatibility(previousSchema.getTypes().get(1), newSchema);
     }
@@ -253,7 +259,8 @@ public class AvroSchema implements ParsedSchema {
     } else if (previousSchema.getType() == Schema.Type.MAP) {
       return checkSchemaCompatibility(previousSchema.getValueType(), newSchema.getValueType());
     } else if (previousSchema.getType() == Schema.Type.RECORD) {
-      for (int i = 0; i < previousSchema.getFields().size(); i++) {
+      int i = 0;
+      for (; i < previousSchema.getFields().size(); i++) {
         Schema.Field previousSubField = previousSchema.getFields().get(i);
         Schema.Field newSubField = newSchema.getFields().get(i);
         if (!previousSubField.name().equals(newSubField.name())) {
@@ -261,6 +268,13 @@ public class AvroSchema implements ParsedSchema {
                   + previousSubField.name() + ", new:" + newSubField.name());
         }
         List<String> result = checkSchemaCompatibility(previousSubField.schema(), newSubField.schema());
+        if (!result.isEmpty()) {
+          return result;
+        }
+      }
+      for (; i < newSchema.getFields().size(); i++) {
+        Schema.Field newSubField = newSchema.getFields().get(i);
+        List<String> result = fieldCheck(newSubField);
         if (!result.isEmpty()) {
           return result;
         }
@@ -422,7 +436,7 @@ public class AvroSchema implements ParsedSchema {
     return Collections.emptyList();
   }
 
-  private List<String> schemaCheck(Schema schema) {
+  private static List<String> schemaCheck(Schema schema) {
     // modified schema must be UNION type
     if (!schema.isUnion()) {
       return Collections.singletonList(
@@ -469,7 +483,7 @@ public class AvroSchema implements ParsedSchema {
     }
   }
 
-  private List<String> fieldCheck(Schema.Field field) {
+  private static List<String> fieldCheck(Schema.Field field) {
     // default value must be null
     if (!field.hasDefaultValue()
             || field.defaultVal() == null
