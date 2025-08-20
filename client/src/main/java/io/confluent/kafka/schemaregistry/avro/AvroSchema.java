@@ -16,6 +16,7 @@
 
 package io.confluent.kafka.schemaregistry.avro;
 
+import com.google.common.base.Strings;
 import io.confluent.kafka.schemaregistry.ParsedSchema;
 import io.confluent.kafka.schemaregistry.client.rest.entities.SchemaReference;
 
@@ -228,7 +229,7 @@ public class AvroSchema implements ParsedSchema {
 //    List<Schema.Field> previousFields = ((AvroSchema) previousSchema).schemaObj.getFields();
 //    List<Schema.Field> newFields = this.schemaObj.getFields();
 
-    return checkSchemaCompatibility(((AvroSchema) previousSchema).schemaObj, this.schemaObj);
+    return checkSchemaCompatibility(((AvroSchema) previousSchema).schemaObj, this.schemaObj, null);
 //      if (previousFiled.schema().getTypes().get(1).getType() == Schema.Type.MAP) {
 //        new newField.schema().getTypes().get(1)isAddOnlyCompatible()
 //      }
@@ -237,44 +238,49 @@ public class AvroSchema implements ParsedSchema {
 //    return Collections.emptyList();
   }
 
-  private static List<String> checkSchemaCompatibility(Schema previousSchema, Schema newSchema) {
+  private static List<String> checkSchemaCompatibility(Schema previousSchema, Schema newSchema, String fieldNamePrefix) {
 
     if (previousSchema.equals(newSchema)) {
       return Collections.emptyList();
     }
 
     if (previousSchema.getType() == Schema.Type.UNION) {
-      return checkSchemaCompatibility(previousSchema.getTypes().get(1), newSchema);
+      return checkSchemaCompatibility(previousSchema.getTypes().get(1), newSchema, fieldNamePrefix);
     }
     if (newSchema.getType() == Schema.Type.UNION) {
-      return checkSchemaCompatibility(previousSchema, newSchema.getTypes().get(1));
+      return checkSchemaCompatibility(previousSchema, newSchema.getTypes().get(1), fieldNamePrefix);
     }
     if (previousSchema.getType() != newSchema.getType()) {
-      return Collections.singletonList("Field type not equal, earlier:"
-              + previousSchema.getType() + ", new:" + newSchema.getType());
+      return Collections.singletonList("Field type not equal, earlier: "
+              + previousSchema.getType() + ", new: " + newSchema.getType());
     }
 
     if (previousSchema.getType() == Schema.Type.ARRAY) {
-      return checkSchemaCompatibility(previousSchema.getElementType(), newSchema.getElementType());
+      return checkSchemaCompatibility(previousSchema.getElementType(), newSchema.getElementType(),
+              getFullFieldName(fieldNamePrefix, "ARRAY_ELEMENT"));
     } else if (previousSchema.getType() == Schema.Type.MAP) {
-      return checkSchemaCompatibility(previousSchema.getValueType(), newSchema.getValueType());
+      return checkSchemaCompatibility(previousSchema.getValueType(), newSchema.getValueType(),
+              getFullFieldName(fieldNamePrefix, "MAP_VALUE"));
     } else if (previousSchema.getType() == Schema.Type.RECORD) {
       int i = 0;
       for (; i < previousSchema.getFields().size(); i++) {
         Schema.Field previousSubField = previousSchema.getFields().get(i);
         Schema.Field newSubField = newSchema.getFields().get(i);
         if (!previousSubField.name().equals(newSubField.name())) {
-          return Collections.singletonList("Field name not equal, earlier:"
-                  + previousSubField.name() + ", new:" + newSubField.name());
+          String previousFullFieldName = getFullFieldName(fieldNamePrefix, previousSubField.name());
+          String newFullFieldName = getFullFieldName(fieldNamePrefix, newSubField.name());
+          return Collections.singletonList("Field name not equal, earlier: "
+                  + previousFullFieldName + ", new: " + newFullFieldName);
         }
-        List<String> result = checkSchemaCompatibility(previousSubField.schema(), newSubField.schema());
+        String fieldName = getFullFieldName(fieldNamePrefix, newSubField.name());
+        List<String> result = checkSchemaCompatibility(previousSubField.schema(), newSubField.schema(), fieldName);
         if (!result.isEmpty()) {
           return result;
         }
       }
       for (; i < newSchema.getFields().size(); i++) {
         Schema.Field newSubField = newSchema.getFields().get(i);
-        List<String> result = fieldCheck(newSubField);
+        List<String> result = fieldCheck(newSubField, fieldNamePrefix);
         if (!result.isEmpty()) {
           return result;
         }
@@ -423,12 +429,13 @@ public class AvroSchema implements ParsedSchema {
 //  }
 
   public List<String> check() {
+    // may not satisfy this condition for root type should be record type
     if (schemaObj.getType() != Schema.Type.RECORD) {
-      return schemaCheck(schemaObj);
+      return schemaCheck(schemaObj, "");
     }
 
     for (Schema.Field field : schemaObj.getFields()) {
-      List<String> result = fieldCheck(field);
+      List<String> result = fieldCheck(field, null);
       if (!result.isEmpty()) {
         return result;
       }
@@ -436,21 +443,21 @@ public class AvroSchema implements ParsedSchema {
     return Collections.emptyList();
   }
 
-  private static List<String> schemaCheck(Schema schema) {
+  private static List<String> schemaCheck(Schema schema, String fieldName) {
     // modified schema must be UNION type
     if (!schema.isUnion()) {
       return Collections.singletonList(
-              String.format("Schema %s is not UNION type", schema));
+              String.format("Not UNION type: Field %s, Schema %s", fieldName, schema));
     }
     // must be 2 subtypes
     if (schema.getTypes().size() != 2) {
       return Collections.singletonList(
-              String.format("Only support null and 1 subtype for union type, schema: %s", schema));
+              String.format("Only support null and 1 subtype for union type: Field %s, Schema %s", fieldName, schema));
     }
     // first subtype must be null
     if (Schema.Type.NULL != schema.getTypes().get(0).getType()) {
       return Collections.singletonList(
-              String.format("The first type of new schema %s is not null", schema));
+              String.format("The first type is not null: Field %s, Schema %s", fieldName, schema));
     }
     Schema subSchema = schema.getTypes().get(1);
     switch (subSchema.getType()) {
@@ -466,12 +473,12 @@ public class AvroSchema implements ParsedSchema {
       case ENUM:
         return Collections.emptyList();
       case ARRAY:
-        return schemaCheck(subSchema.getElementType());
+        return schemaCheck(subSchema.getElementType(), getFullFieldName(fieldName, "ARRAY_ELEMENT"));
       case MAP:
-        return schemaCheck(subSchema.getValueType());
+        return schemaCheck(subSchema.getValueType(), getFullFieldName(fieldName, "MAP_VALUE"));
       case RECORD:
         for (Schema.Field field : subSchema.getFields()) {
-          List<String> result = fieldCheck(field);
+          List<String> result = fieldCheck(field, fieldName);
           if (!result.isEmpty()) {
             return result;
           }
@@ -479,22 +486,34 @@ public class AvroSchema implements ParsedSchema {
         return Collections.emptyList();
       default:
         return Collections.singletonList(
-                String.format("Schema type %s not support", subSchema.getType()));
+                String.format("Schema type %s not support: Field %s, Schema %s", subSchema.getType(), fieldName, schema));
     }
   }
 
-  private static List<String> fieldCheck(Schema.Field field) {
+  private static List<String> fieldCheck(Schema.Field field, String fieldNamePrefix) {
+    String fieldName = getFullFieldName(fieldNamePrefix, field.name());
+
     // default value must be null
     if (!field.hasDefaultValue()
             || field.defaultVal() == null
             || !JsonProperties.Null.class.getName().equals(
             field.defaultVal().getClass().getName())) {
       return Collections.singletonList(
-              String.format("New schema field %s default value must be set to null", field));
+              String.format("Default value must be set to null: Field %s", fieldName));
     }
 
     // check schema
-    return schemaCheck(field.schema());
+    return schemaCheck(field.schema(), fieldName);
+  }
+
+  private static String getFullFieldName(String fieldNamePrefix, String fieldName) {
+    String fullFieldName;
+    if (Strings.isNullOrEmpty(fieldNamePrefix)) {
+      fullFieldName = fieldName;
+    } else {
+      fullFieldName = String.join(".", fieldNamePrefix, fieldName);
+    }
+    return fullFieldName;
   }
 
   @Override
