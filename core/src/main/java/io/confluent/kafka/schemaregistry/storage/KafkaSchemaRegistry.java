@@ -494,6 +494,7 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
 
       if (schema.getSchemaType().equals("AVRO") && undeletedVersions.isEmpty()
               && !getCompatibilityLevelInScope(subject).equals(CompatibilityLevel.NONE)) {
+        log.info("checking schema: compatibility level is " + getCompatibilityLevelInScope(subject));
         List<String> checkResult = ((AvroSchema) parsedSchema).check();
         if (!checkResult.isEmpty()) {
           throw new IncompatibleSchemaException(checkResult.get(0));
