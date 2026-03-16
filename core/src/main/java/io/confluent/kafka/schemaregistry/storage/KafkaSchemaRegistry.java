@@ -491,19 +491,9 @@ public class KafkaSchemaRegistry implements SchemaRegistry, LeaderAwareSchemaReg
 
       final boolean isCompatible =
               isCompatibleWithPrevious(subject, parsedSchema, undeletedVersions).isEmpty();
-//      boolean isAddOnlyCompatible = true;
-//      //TODO When registering new schema, there's no previous schema for check. For addOnly type, need to
-//      // run additional checks to make sure they are compatible.
-//      // TODO now only do this check for initial run PB schema. Need to 1) run for all 2) Remove check and move it here.
-//      if (schema.getSchemaType().equals("PROTOBUF") && undeletedVersions.isEmpty()) {
-//        log.info("Detected PB new addonly schema registration event. Will run sequential checker.");
-//        List<String> sequentialSchemaInOrderCheckErrMsgs = AddOnlySchemaChecker.sequentialSchemaInOrderCheck(parsedSchema);
-//        if (!sequentialSchemaInOrderCheckErrMsgs.isEmpty()) {
-//          throw new IncompatibleSchemaException(sequentialSchemaInOrderCheckErrMsgs.toString());
-//        }
-//        isAddOnlyCompatible = sequentialSchemaInOrderCheckErrMsgs.isEmpty();
-//      }
-      if (schema.getSchemaType().equals("AVRO") && undeletedVersions.isEmpty()) {
+
+      if (schema.getSchemaType().equals("AVRO") && undeletedVersions.isEmpty()
+              && !getCompatibilityLevelInScope(subject).equals(CompatibilityLevel.NONE)) {
         List<String> checkResult = ((AvroSchema) parsedSchema).check();
         if (!checkResult.isEmpty()) {
           throw new IncompatibleSchemaException(checkResult.get(0));
